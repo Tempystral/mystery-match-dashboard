@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "outDir": "build/client",
+    "rootDir": "src/client",
+    "strict": true,
+    "moduleResolution": "NodeNext",
+    "jsx": "preserve",
+
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "useDefineForClassFields": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": false,
+    "forceConsistentCasingInFileNames": true,
+
+    "noUnusedLocals": false,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+
+    "allowJs": true,
+    "checkJs": false,
+    "skipLibCheck": true,
+
+    "pretty": true,
+    "sourceMap": true,
+  },
+  "exclude": ["build", "node_modules"]
+}

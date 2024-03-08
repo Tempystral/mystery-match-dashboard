@@ -6,22 +6,34 @@
   "type": "module",
   "main": "build/main.js",
   "scripts": {
-    "build": "tsc",
-    "build:changelog": "npx @discordx/changelog --src src",
-    "dev": "node --loader ts-node/esm/transpile-only src/dev.ts",
-    "start": "node build/main.js"
+    "build:server": "tsc -b tsconfig.server.json",
+    "watch:server": "npx tsx watch --clear-screen=false --tsconfig ./tsconfig.server.json ./src/server/dev.ts",
+    "start:server": "node build/server/main.js --watch src/server/*.ts --transpile-only",
+    "build:client": "vite build",
+    "watch:client": "vite",
+    "start:client": "node build/client/main.js"
   },
   "dependencies": {
     "@discordx/importer": "^1.3.0",
+    "@discordx/koa": "^1.2.1",
+    "@koa/router": "^12.0.1",
     "discord.js": "^14.14.1",
-    "discordx": "^11.9.0"
+    "discordx": "^11.9.0",
+    "dotenv": "^16.4.5",
+    "koa": "^2.15.0"
   },
   "devDependencies": {
+    "@types/koa": "^2.15.0",
+    "@types/koa__router": "^12.0.4",
     "@types/node": "^20.10.1",
     "chokidar": "^3.5.3",
-    "prettier": "^3.1.0",
-    "ts-node": "^10.9.1",
-    "typescript": "5.3.2"
+    "eslint": "^8.57.0",
+    "nodemon": "^3.1.0",
+    "prettier": "^3.2.5",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.7.1",
+    "typescript": "5.3.2",
+    "typescript-eslint": "^7.1.1"
   },
   "engines": {
     "node": ">=16.0.0",
