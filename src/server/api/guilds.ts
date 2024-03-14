@@ -1,13 +1,11 @@
 import { Get, Post, Router } from "@discordx/koa";
+import { GoogleSpreadsheetRow } from "google-spreadsheet";
 import type { Context } from "koa";
-import { GoogleSheetsService } from "./services/sheetsService.js";
-import { GoogleSpreadsheet, GoogleSpreadsheetWorksheet, GoogleSpreadsheetRow } from "google-spreadsheet";
 import { bot } from "../bot.js";
+import sheets from "./services/sheetsService.js";
 
 @Router()
 export class API {
-  private sheetsService: GoogleSheetsService | undefined;
-
   @Get("/")
   index(context: Context): void {
     context.body = `
@@ -30,7 +28,6 @@ export class API {
 
   @Get()
   async matches(context: Context) {
-    const sheets = await this.getSheetsService();
     const doc = await sheets.loadDocument(process.env.MATCHES_SPREADSHEET!);
     const sheet = await doc.sheetsByTitle["Kuso8 Matches"];
 
@@ -52,15 +49,5 @@ export class API {
   @Post()
   login(context: Context): void {
     context.body;
-  }
-
-  private async getSheetsService() {
-    if (!this.sheetsService) {
-      this.sheetsService = await GoogleSheetsService.init(
-        process.env.GOOGLE_CLIENT_EMAIL,
-        process.env.GOOGLE_PRIVATE_KEY,
-      );
-    }
-    return this.sheetsService;
   }
 }

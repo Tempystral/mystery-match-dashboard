@@ -4,10 +4,10 @@ import { JWT } from "google-auth-library";
 import { range } from "discord.js";
 import type { KusograndeMatch } from "../../../model/data.js";
 
-export class GoogleSheetsService {
-  #auth: JWT;
+class GoogleSheetsService {
+  #auth?: JWT;
 
-  private constructor(auth: JWT) {
+  private constructor(auth?: JWT) {
     this.#auth = auth;
   }
 
@@ -21,6 +21,8 @@ export class GoogleSheetsService {
   }
 
   async loadDocument(docId: string) {
+    if (!this.#auth) throw new Error("Not authorized! Run init() first.");
+
     const doc = new GoogleSpreadsheet(docId, this.#auth);
     await doc.loadInfo();
     return doc;
@@ -70,3 +72,8 @@ export class GoogleSheetsService {
     };
   }
 }
+
+export default await GoogleSheetsService.init(
+  process.env.GOOGLE_CLIENT_EMAIL,
+  process.env.GOOGLE_PRIVATE_KEY,
+);
