@@ -1,13 +1,11 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES2020",
     "module": "NodeNext",
     "outDir": "build/server",
-    "rootDir": "src/server",
     "strict": true,
     "moduleResolution": "NodeNext",
     "jsx": "preserve",
-
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
@@ -16,20 +14,21 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": false,
     "forceConsistentCasingInFileNames": true,
-
     "noUnusedLocals": false,
-    "noUnusedParameters": true,
+    "noUnusedParameters": false,
     "noImplicitReturns": true,
-
     "allowJs": true,
     "checkJs": false,
     "skipLibCheck": true,
-
     "pretty": true,
     "sourceMap": true,
   },
-  "exclude": ["build", "node_modules"],
+  "exclude": [
+    "build",
+    "node_modules"
+  ],
   "include": [
-    "src/server/**/*.ts"
+    "src/server/**/*.ts",
+    "src/model/**/*.ts"
   ],
 }

@@ -26,6 +26,8 @@
     "discord.js": "^14.14.1",
     "discordx": "^11.9.0",
     "dotenv": "^16.4.5",
+    "google-auth-library": "^9.6.3",
+    "google-spreadsheet": "^4.1.1",
     "koa": "^2.15.0",
     "localforage": "^1.10.0",
     "pinia": "^2.1.7",

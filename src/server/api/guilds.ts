@@ -1,10 +1,13 @@
 import { Get, Post, Router } from "@discordx/koa";
 import type { Context } from "koa";
-
+import { GoogleSheetsService } from "./services/sheetsService.js";
+import { GoogleSpreadsheet, GoogleSpreadsheetWorksheet, GoogleSpreadsheetRow } from "google-spreadsheet";
 import { bot } from "../bot.js";
 
 @Router()
 export class API {
+  private sheetsService: GoogleSheetsService | undefined;
+
   @Get("/")
   index(context: Context): void {
     context.body = `
@@ -22,14 +25,42 @@ export class API {
 
   @Get()
   guilds(context: Context): void {
-    context.body = `${bot.guilds.cache
-      .map((g) => `${g.id}: ${g.name}`)
-      .join("\n")}`;
+    context.body = `${bot.guilds.cache.map((g) => `${g.id}: ${g.name}`).join("\n")}`;
+  }
+
+  @Get()
+  async matches(context: Context) {
+    const sheets = await this.getSheetsService();
+    const doc = await sheets.loadDocument(process.env.MATCHES_SPREADSHEET!);
+    const sheet = await doc.sheetsByTitle["Kuso8 Matches"];
+
+    await sheet.loadHeaderRow(3);
+    const rows = await sheet.getRows({ offset: -3 });
+    // eslint-disable-next-line tseslint/no-explicit-any
+    rows.unshift(new GoogleSpreadsheetRow<Record<string, any>>(sheet, 0, [""]));
+    // Loads all the rows with a header not at the top. This way I only have to load the rows for reading once.
+
+    const dayHeaders = rows.filter((r) => this.isDayHeader(r));
+
+    context.body = sheets.getMatches(rows, dayHeaders);
+  }
+
+  private isDayHeader(row: GoogleSpreadsheetRow) {
+    return !isNaN(Date.parse(row.get("Time")));
   }
 
   @Post()
   login(context: Context): void {
-    context.body
+    context.body;
   }
-  /* I can probably just build this with any web framework, like vue + vite if I wanted to. It seems like the bot is just another component. */
+
+  private async getSheetsService() {
+    if (!this.sheetsService) {
+      this.sheetsService = await GoogleSheetsService.init(
+        process.env.GOOGLE_CLIENT_EMAIL,
+        process.env.GOOGLE_PRIVATE_KEY,
+      );
+    }
+    return this.sheetsService;
+  }
 }
