@@ -1,6 +1,7 @@
 import { Koa } from "@discordx/koa";
-import { IntentsBitField } from "discord.js";
+import { Events, IntentsBitField } from "discord.js";
 import { Client } from "discordx";
+import { Match, MatchPlayer, Player } from "../data/models.js";
 
 export const bot = new Client({
   intents: [
@@ -13,16 +14,19 @@ export const bot = new Client({
   silent: false,
 });
 
-bot.once("ready", async () => {
+bot.once(Events.ClientReady, async (client) => {
   await bot.initApplicationCommands();
 
-  console.log("Bot started");
+  let sq;
+  Match.sync();
+  Player.sync();
+  MatchPlayer.sync();
+
+  console.log(`Bot started, logged in as ${client.user.tag}`);
 });
 
 export async function setup_rest() {
-  const server = new Koa({
-    
-  });
+  const server = new Koa({});
 
   // api: need to build the api server first
   await server.build();

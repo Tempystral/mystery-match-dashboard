@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "NodeNext",
-    "outDir": "build/server",
+    "outDir": "build",
     "strict": true,
     "moduleResolution": "NodeNext",
     "jsx": "preserve",
