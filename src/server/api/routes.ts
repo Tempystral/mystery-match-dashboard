@@ -1,8 +1,8 @@
 import { Get, Post, Router } from "@discordx/koa";
-import { GoogleSpreadsheetRow } from "google-spreadsheet";
 import type { Context } from "koa";
 import { bot } from "../bot.js";
 import sheets from "./services/sheetsService.js";
+import { Match, Player } from "../../data/models.js";
 
 @Router()
 export class API {
@@ -29,21 +29,25 @@ export class API {
   @Get()
   async matches(context: Context) {
     const doc = await sheets.loadDocument(process.env.MATCHES_SPREADSHEET!);
-    const sheet = await doc.sheetsByTitle["Kuso8 Matches"];
-
-    await sheet.loadHeaderRow(3);
-    const rows = await sheet.getRows({ offset: -3 });
-    // eslint-disable-next-line tseslint/no-explicit-any
-    rows.unshift(new GoogleSpreadsheetRow<Record<string, any>>(sheet, 0, [""]));
-    // Loads all the rows with a header not at the top. This way I only have to load the rows for reading once.
-
-    const dayHeaders = rows.filter((r) => this.isDayHeader(r));
-
-    context.body = sheets.getMatches(rows, dayHeaders);
+    await sheets.buildMatches(doc);
+    const matches = await Match.findAll({ include: [Player] });
+    context.body = matches;
   }
 
-  private isDayHeader(row: GoogleSpreadsheetRow) {
-    return !isNaN(Date.parse(row.get("Time")));
+  @Get()
+  async players(context: Context) {
+    const doc = await sheets.loadDocument(process.env.MATCHES_SPREADSHEET!);
+    await sheets.buildPlayers(doc);
+
+    const players = await Player.findAll();
+    context.body = players;
+  }
+
+  @Get()
+  async clear(context: Context) {
+    await Player.truncate();
+    await Match.truncate();
+    context.body = "Cleared!";
   }
 
   @Post()

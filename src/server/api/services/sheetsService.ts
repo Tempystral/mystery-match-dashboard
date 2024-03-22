@@ -2,7 +2,9 @@ import { GoogleSpreadsheet, GoogleSpreadsheetWorksheet, GoogleSpreadsheetRow } f
 import { JWT } from "google-auth-library";
 
 import { range } from "discord.js";
-import type { KusograndeMatch } from "../../../model/data.js";
+import { Player, Match } from "../../../data/models.js";
+import { Op } from "@sequelize/core";
+import { format, parse } from "date-fns";
 
 class GoogleSheetsService {
   #auth?: JWT;
@@ -28,52 +30,154 @@ class GoogleSheetsService {
     return doc;
   }
 
-  private getNextDay(days: GoogleSpreadsheetRow[], row: GoogleSpreadsheetRow) {
-    return days[days.findIndex((day) => day.rowNumber === row.rowNumber) + 1];
-  }
+  async buildMatches(doc: GoogleSpreadsheet) {
+    const sheet = await doc.sheetsByTitle["Kuso8 Matches"];
+    await sheet.loadCells("A1:I1");
+    const tourney = sheet.getCell(0, 0).value?.toString();
+    if (!tourney) {
+      console.log("Tournament header not readable");
+      return;
+    }
 
-  getMatches(rows: GoogleSpreadsheetRow[], dayHeaders: GoogleSpreadsheetRow[]) {
-    return rows.flatMap((row, i, arr) => {
+    await sheet.loadHeaderRow(3);
+    const rows = await sheet.getRows({ offset: -3 });
+    // eslint-disable-next-line tseslint/no-explicit-any
+    rows.unshift(new GoogleSpreadsheetRow<Record<string, any>>(sheet, 0, [""]));
+    // Loads all the rows with a header not at the top. This way I only have to load the rows for reading once.
+
+    const dayHeaders = rows.filter((r) => this.isDayHeader(r));
+
+    rows.forEach(async (row, i, arr) => {
       if (dayHeaders.includes(row)) {
         // This is a day header, process the day
         const headerRow = arr[i + 1];
         const nextDay = this.getNextDay(dayHeaders, row)?.rowNumber ?? arr.length;
 
         console.log(`Getting ${nextDay - headerRow.rowNumber} rows starting at ${headerRow.rowNumber + 1}`);
-        return this.getMatchesForDay(arr, headerRow.rowNumber, nextDay);
-      } else {
-        return [];
+        await this.buildMatchesForDay(tourney, row, arr, headerRow.rowNumber, nextDay);
       }
     });
   }
 
-  private getMatchesForDay(rows: GoogleSpreadsheetRow[], start: number, end: number) {
-    const matches = [];
+  private isDayHeader(row: GoogleSpreadsheetRow) {
+    return !isNaN(Date.parse(row.get("Time")));
+  }
+
+  private getNextDay(days: GoogleSpreadsheetRow[], row: GoogleSpreadsheetRow) {
+    return days[days.findIndex((day) => day.rowNumber === row.rowNumber) + 1];
+  }
+
+  private async buildMatchesForDay(
+    tourney: string,
+    dayRow: GoogleSpreadsheetRow,
+    rows: GoogleSpreadsheetRow[],
+    start: number,
+    end: number,
+  ) {
     for (const j of range({ start: start + 1, end: end, step: 4 })) {
       if (rows[j]?.get("Time")) {
         // There is a match here
-        matches.push(this.buildMatch(rows.slice(j, j + 4)));
+        await this.buildMatch(tourney, dayRow, rows.slice(j, j + 4));
       }
     }
-    return matches;
   }
 
-  private buildMatch(rows: GoogleSpreadsheetRow[]): KusograndeMatch {
-    return {
-      date: new Date(),
-      game: rows[0].get("Game"),
-      platform: rows[0].get("Game Platform"),
-      gamemaster: rows[0].get("GM"),
-      round: rows[0].get("Round"),
-      length: rows[0].get("Length"),
-      vod: rows[0].get("VOD"),
-      players: rows.map((r) => r.get("Players")),
-      scores: rows.map((r) => r.get("Scores")),
-    };
+  private buildDate(day: string, time: string) {
+    time = time.replace(/EST|EDT/, "");
+    return parse(`${day.trim()} ${time.trim()}`, "EEEE, MMMM d, y hh:mmaaaaaa", new Date());
+  }
+
+  private async buildMatch(tourney: string, dayRow: GoogleSpreadsheetRow, rows: GoogleSpreadsheetRow[]) {
+    const d = this.buildDate(dayRow.get("Time"), rows[0].get("Time"));
+    const l = Number((rows[0].get("Length") as string).match(/\d+/)?.[0]);
+    const [match, created] = await Match.findCreateFind({
+      where: {
+        tournament: tourney,
+        date: d,
+        time: d.getTime(),
+      },
+      defaults: {
+        tournament: tourney,
+        date: d,
+        time: d.getTime(),
+        game: rows[0].get("Game"),
+        platform: rows[0].get("Game Platform"),
+        gamemaster: rows[0].get("GM"),
+        round: rows[0].get("Round"),
+        length: l,
+        vod: rows[0].get("VOD"),
+      },
+      include: [
+        {
+          model: Player,
+          as: "players",
+        },
+      ],
+    });
+    if (created) {
+      console.log(`Created ${match.match_id}`);
+      const players = await this.getPlayersInMatch(rows);
+      const names = players.map((p) => p.twitch_name);
+      console.log(
+        `Found ${players.length} players ${names}\
+        for match ${match.match_id} at ${match.date}|${new Date(match.time).toTimeString()}`,
+      );
+      await match.addPlayers(players);
+      console.log("Added players to match.");
+    } else {
+      console.log(`Could not create ${match.match_id}`);
+    }
+  }
+
+  async buildPlayers(doc: GoogleSpreadsheet) {
+    const sheet = await doc.sheetsByTitle["Kuso8 Players"];
+    await sheet.loadHeaderRow(1);
+    const rows = await sheet.getRows();
+
+    rows.forEach(async (row) => {
+      const [player, created] = await Player.findCreateFind({
+        where: {
+          twitch_name: row.get("Twitch Name"),
+          discord_name: row.get("Discord Name"),
+        },
+        defaults: {
+          twitch_name: row.get("Twitch Name"),
+          discord_name: row.get("Discord Name"),
+          twitter_name: row.get("Twitter Handle"),
+          pronunciation_notes: row.get("Name Pronunciation"),
+          twitch_alt: row.get("Alt Stream Name"),
+          pronouns: row.get("Preferred Pronouns"),
+          accessibility: row.get("Accessibility Needs"),
+          timezone: row.get("Timezone"),
+          availability: row.get("Availability"),
+          notes: row.get("Notes"),
+        },
+        include: [
+          {
+            model: Match,
+            as: "matches",
+          },
+        ],
+      });
+      if (created) {
+        console.log(`Created player ${player.twitch_name}`);
+      } else {
+        console.log(`Could not create player ${row.get("Twitch Name")}!`);
+      }
+    });
+  }
+
+  private async getPlayersInMatch(rows: GoogleSpreadsheetRow[]) {
+    const name_options = rows.map((r) => {
+      return { twitch_name: r.get("Players") as string };
+    });
+    return await Player.findAll({ where: { [Op.or]: name_options } });
   }
 }
 
-export default await GoogleSheetsService.init(
+const service = await GoogleSheetsService.init(
   process.env.GOOGLE_CLIENT_EMAIL,
   process.env.GOOGLE_PRIVATE_KEY,
 );
+
+export default service;
