@@ -3,7 +3,8 @@ import chokidar from "chokidar";
 import { DIService, MetadataStorage } from "discordx";
 
 import { configDotenv } from "dotenv";
-import { bot, setup_rest } from "./bot.js";
+import bot from "./bot.js";
+import setup_web from "./web.js";
 
 configDotenv();
 
@@ -11,7 +12,7 @@ configDotenv();
 // const importPattern =  __dirname + "/{events,commands}/**/*.{ts,js}"
 
 // The following syntax should be used in the ECMAScript environment
-const importPattern = `${dirname(import.meta.url,)}/{events,commands,api}/**/*.{ts,js}`;
+const importPattern = `${dirname(import.meta.url)}/{events,commands,api}/**/*.{ts,js}`;
 
 /**
  * Import files
@@ -22,9 +23,7 @@ const importPattern = `${dirname(import.meta.url,)}/{events,commands,api}/**/*.{
  */
 export async function LoadFiles(src: string): Promise<void> {
   const files = await resolve(src);
-  await Promise.all(
-    files.map((file) => import(`${file}?version=${Date.now()}`)),
-  );
+  await Promise.all(files.map((file) => import(`${file}?version=${Date.now()}`)));
 }
 
 /**
@@ -67,13 +66,11 @@ async function run() {
 
   // Log in with your bot token
   await bot.login(process.env.BOT_TOKEN);
-  await setup_rest();
+  await setup_web();
 
   // Hot Module reload
   if (process.env.NODE_ENV !== "production") {
-    console.log(
-      "> Hot-Module-Reload enabled in development. Commands will automatically reload.",
-    );
+    console.log("> Hot-Module-Reload enabled in development. Commands will automatically reload.");
 
     // Watch changed files using chikidar
     watcher.on("add", Reload);
