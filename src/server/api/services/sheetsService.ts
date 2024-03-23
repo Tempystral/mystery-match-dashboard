@@ -2,7 +2,7 @@ import { GoogleSpreadsheet, GoogleSpreadsheetWorksheet, GoogleSpreadsheetRow } f
 import { JWT } from "google-auth-library";
 
 import { range } from "discord.js";
-import { Player, Match } from "../../../data/models.js";
+import { Player, Match, MatchPlayer } from "../../../data/models.js";
 import { Op } from "@sequelize/core";
 import { format, parse } from "date-fns";
 
@@ -115,17 +115,21 @@ class GoogleSheetsService {
       ],
     });
     if (created) {
-      console.log(`Created ${match.match_id}`);
+      console.log(`Created ${match.id}`);
       const players = await this.getPlayersInMatch(rows);
-      const names = players.map((p) => p.twitch_name);
       console.log(
-        `Found ${players.length} players ${names}\
-        for match ${match.match_id} at ${match.date}|${new Date(match.time).toTimeString()}`,
+        `Found ${players.length} players: [${players.map((p) => " " + p.player?.twitch_name)}] for match ${match.id} at ${match.date}|${new Date(match.time).toTimeString()}`,
       );
-      await match.addPlayers(players);
+      players.forEach(async (p) => {
+        if (p.player) {
+          console.log(`Adding ${p.player.twitch_name} with score ${p.score} to match ${match.game}`);
+          await match.addPlayer(p.player, { through: { score: p.score } });
+        }
+      });
+
       console.log("Added players to match.");
     } else {
-      console.log(`Could not create ${match.match_id}`);
+      console.log(`Could not create ${match.id}`);
     }
   }
 
@@ -168,10 +172,19 @@ class GoogleSheetsService {
   }
 
   private async getPlayersInMatch(rows: GoogleSpreadsheetRow[]) {
-    const name_options = rows.map((r) => {
-      return { twitch_name: r.get("Players") as string };
+    const players = await Player.findAll({
+      where: {
+        [Op.or]: rows.map((r) => {
+          return { twitch_name: r.get("Players") as string };
+        }),
+      },
     });
-    return await Player.findAll({ where: { [Op.or]: name_options } });
+
+    return rows.map((r) => {
+      const twitch_name = r.get("Players") as string;
+      const score = r.get("Scores") as number;
+      return { player: players.find((p) => p.twitch_name === twitch_name), score: score };
+    });
   }
 }
 

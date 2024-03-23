@@ -20,3 +20,9 @@ export const Round = {
   GRAND_FINALS: "Grand Finals",
   GRAND_FINALS_RESET: "Grand Finals (Reset)",
 } as const;
+
+export const PlayerStatus = {
+  ACTIVE: "ACTV",
+  ELIMINATED: "ELIM",
+  DROPPED_OUT: "DROP",
+} as const;
