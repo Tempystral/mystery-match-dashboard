@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { matchRouter, playerRouter } from "./routes/index.js";
-import bot from "../bot.js";
-import { Match, MatchPlayer, Player } from "../../data/models.js";
+import { bot } from "../setup.js";
+import { Match, Score, Player } from "../../data/models.js";
 
 const router = Router({ caseSensitive: true });
 
@@ -30,7 +30,7 @@ router.get("/guilds", (req, res) => {
 router.get("/clear", async (req, res) => {
   await Player.truncate();
   await Match.truncate();
-  await MatchPlayer.truncate();
+  await Score.truncate();
   res.send("Cleared!");
 });
 

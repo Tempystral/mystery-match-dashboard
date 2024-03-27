@@ -1,12 +1,15 @@
 import express from "express";
 import sheets from "../services/sheetsService.js";
-import { Match, Player } from "../../../data/models.js";
+import * as database from "../services/dbService.js";
+import { Player } from "../../../data/models.js";
+import { UpdateValues, ValidationError } from "@sequelize/core";
+import { body } from "express-validator";
 
 const router = express.Router();
 
 // Get players
 router.get("/", async (req, res, next) => {
-  const players = await Player.findAll({ include: [Match] });
+  const players = await database.getPlayers({ extras: true });
   res.send(players);
 });
 
@@ -16,7 +19,28 @@ router.post("/", async (req, res, next) => {
 });
 
 // Add players
-router.put("/", async (req, res, next) => {});
+router.put("/", body().isObject(), async (req, res, next) => {
+  const result = await database.createPlayer(req.body);
+  if (result instanceof Player) {
+    return res.status(200).send(result);
+  } else if (result instanceof ValidationError) {
+    return res.status(400).send({ message: result.message });
+  } else {
+    return res.status(500).send({ message: result.message });
+  }
+});
+
+// Update player
+router.patch("/", body("value.player_id").exists({ values: "falsy" }), async (req, res, next) => {
+  const [id, fields]: [string, UpdateValues<Player>] = req.body;
+  const [affectedRows] = await database.updatePlayer(id, fields);
+  if (affectedRows < 1) {
+    return res.status(500).send("Could not update rows!");
+  } else if (affectedRows > 1) {
+    return res.status(500).send("What the fuck did you do");
+  }
+  return res.status(200);
+});
 
 // Import
 router.get("/import", async (req, res, next) => {
