@@ -1,7 +1,6 @@
 import { dirname, importx } from "@discordx/importer";
 import "dotenv/config";
-import bot from "./bot.js";
-import setup_web from "./web.js";
+import { bot } from "./setup.js";
 
 async function run() {
   await importx(`${dirname(import.meta.url)}/{events,commands,api}/**/*.{ts,js}`);
@@ -10,7 +9,6 @@ async function run() {
     throw Error("Could not find BOT_TOKEN in your environment");
   }
   await bot.login(process.env.BOT_TOKEN);
-  await setup_web();
 }
 
 void run();

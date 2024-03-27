@@ -3,8 +3,7 @@ import chokidar from "chokidar";
 import { DIService, MetadataStorage } from "discordx";
 
 import { configDotenv } from "dotenv";
-import bot from "./bot.js";
-import setup_web from "./web.js";
+import { bot } from "./setup.js";
 
 configDotenv();
 
@@ -66,13 +65,12 @@ async function run() {
 
   // Log in with your bot token
   await bot.login(process.env.BOT_TOKEN);
-  await setup_web();
 
   // Hot Module reload
   if (process.env.NODE_ENV !== "production") {
     console.log("> Hot-Module-Reload enabled in development. Commands will automatically reload.");
 
-    // Watch changed files using chikidar
+    // Watch changed files using chokidar
     watcher.on("add", Reload);
     watcher.on("change", Reload);
     watcher.on("unlink", Reload);
