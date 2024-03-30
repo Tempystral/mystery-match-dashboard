@@ -10,13 +10,17 @@ import * as directives from "vuetify/directives";
 import { aliases, fa } from "vuetify/iconsets/fa-svg";
 import "vuetify/styles";
 
+import { VueQueryPlugin } from "@tanstack/vue-query";
+
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { fab } from "@fortawesome/free-brands-svg-icons";
+import { fas } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
 const app = createApp(App);
 app.component("font-awesome-icon", FontAwesomeIcon);
 library.add(fab);
+library.add(fas);
 
 const vuetify = createVuetify({
   components,
@@ -36,4 +40,4 @@ const vuetify = createVuetify({
   },
 });
 
-app.use(vuetify).use(router).use(createPinia()).mount("#app");
+app.use(vuetify).use(router).use(VueQueryPlugin).use(createPinia()).mount("#app");
