@@ -2,7 +2,10 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "NodeNext",
-    "outDir": "build",
+    "rootDir": "./src",
+    "outDir": "./build",
+    //"composite": true,
+    //"declarationDir": "build/types",
     "strict": true,
     "moduleResolution": "NodeNext",
     "jsx": "preserve",
@@ -29,6 +32,17 @@
   ],
   "include": [
     "src/server/**/*.ts",
-    "src/model/**/*.ts"
+    //"src/server/**/*.d.ts",
   ],
+  "references": [
+    {
+      "path": "src/shared"
+    }
+  ],
+  "ts-node": {
+    "esm": true,
+    "compiler": "typescript",
+    "transpileOnly": true,
+    "files": true
+  }
 }

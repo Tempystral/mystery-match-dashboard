@@ -28,11 +28,16 @@
     "pretty": true,
     "sourceMap": true,
   },
+  "references": [
+    {
+      "path": "src/shared"
+    }
+  ],
   "include": [
     "src/client/**/*.ts",
     "src/client/**/*.d.ts",
     "src/client/**/*.vue",
-    "src/client/.eslintrc.json"
+    "src/client/.eslintrc.json",
   ],
   "exclude": [
     "build",

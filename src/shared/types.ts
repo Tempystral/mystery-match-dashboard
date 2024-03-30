@@ -21,8 +21,14 @@ export const Round = {
   GRAND_FINALS_RESET: "Grand Finals (Reset)",
 } as const;
 
-export const PlayerStatus = {
-  ACTIVE: "ACTV",
-  ELIMINATED: "ELIM",
-  DROPPED_OUT: "DROP",
-} as const;
+export enum PlayerStatus {
+  ACTIVE = "ACTV",
+  ELIMINATED = "ELIM",
+  DROPPED_OUT = "DROP",
+}
+
+export const PlayerStatusLabel: { [key in PlayerStatus]: string } = {
+  [PlayerStatus.ACTIVE]: "Active",
+  [PlayerStatus.ELIMINATED]: "Eliminated",
+  [PlayerStatus.DROPPED_OUT]: "Dropped Out",
+};

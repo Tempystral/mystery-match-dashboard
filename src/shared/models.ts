@@ -18,15 +18,15 @@ import {
   InferCreationAttributes,
   Model,
   NonAttribute,
-  Op,
+  Attributes,
 } from "@sequelize/core";
 import {
   AllowNull,
   Attribute,
-  BelongsTo,
   BelongsToMany,
   ColumnName,
   Default,
+  HasMany,
   NotNull,
   PrimaryKey,
   Table,
@@ -35,7 +35,50 @@ import {
 import { NotEmpty } from "@sequelize/validator.js";
 import { PlayerStatus, Round } from "./types.js";
 
-export class Player extends Model<InferAttributes<Player>, InferCreationAttributes<Player>> {
+type ReadOnly<T> = {
+  readonly [K in keyof T]: T[K];
+};
+
+export interface PlayerResponse {
+  player_id?: string;
+  twitch_name: string;
+  twitch_alt?: string;
+  discord_name: string;
+  twitter_name?: string;
+  in_brackets: boolean;
+  status: PlayerStatus;
+  pronunciation_notes?: string;
+  pronouns?: string;
+  accessibility?: string;
+  timezone?: string;
+  availability?: string;
+  notes?: string;
+  matches?: Partial<MatchResponse[]>;
+  Score?: ScoreResponse;
+}
+
+export interface MatchResponse {
+  match_id: string;
+  tournament: string;
+  date: Date;
+  game?: string;
+  platform?: string;
+  gamemaster?: string;
+  round?: typeof Round;
+  length?: number;
+  vod?: string;
+  players?: Partial<PlayerResponse[]>;
+  Score?: ScoreResponse;
+}
+
+export interface ScoreResponse {
+  points?: string;
+}
+
+export class Player
+  extends Model<InferAttributes<Player>, InferCreationAttributes<Player>>
+  implements PlayerResponse
+{
   @Attribute(DataTypes.UUID)
   @Default(DataTypes.UUIDV4)
   @PrimaryKey
@@ -66,7 +109,7 @@ export class Player extends Model<InferAttributes<Player>, InferCreationAttribut
 
   @Attribute(DataTypes.STRING)
   @Default(PlayerStatus.ACTIVE)
-  declare status: CreationOptional<typeof PlayerStatus>;
+  declare status: CreationOptional<PlayerStatus>;
 
   @Attribute(DataTypes.STRING)
   @Default("")
@@ -92,6 +135,16 @@ export class Player extends Model<InferAttributes<Player>, InferCreationAttribut
   @Default("")
   declare notes: string;
 
+  @Attribute(DataTypes.VIRTUAL(DataTypes.INTEGER, ["twitch_name"]))
+  get total_score(): NonAttribute<number> {
+    const scores = this.matches?.flatMap((m) => m["Score"]);
+    return (
+      scores.reduce((acc, curr) => {
+        return Number(curr.points) ? acc + Number(curr.points) : 0;
+      }, 0) ?? 0
+    );
+  }
+
   @BelongsToMany(() => Match, {
     through: () => Score,
     inverse: {
@@ -110,6 +163,12 @@ export class Player extends Model<InferAttributes<Player>, InferCreationAttribut
   })
   declare matches?: NonAttribute<Match[]>;
 
+  @HasMany(() => Score, {
+    sourceKey: "player_id",
+    foreignKey: { name: "player_id", columnName: "player_id", allowNull: false },
+  })
+  declare scores?: NonAttribute<Score[]>;
+
   declare getMatches: BelongsToManyGetAssociationsMixin<Match>;
   declare setMatches: BelongsToManySetAssociationsMixin<Match, Match["match_id"]>;
   declare addMatch: BelongsToManyAddAssociationMixin<Match, Match["match_id"]>;
@@ -124,7 +183,10 @@ export class Player extends Model<InferAttributes<Player>, InferCreationAttribut
   declare getScores: HasManyGetAssociationsMixin<Score>;
 }
 
-export class Match extends Model<InferAttributes<Match>, InferCreationAttributes<Match>> {
+export class Match
+  extends Model<InferAttributes<Match>, InferCreationAttributes<Match>>
+  implements MatchResponse
+{
   @Attribute(DataTypes.UUID)
   @Default(DataTypes.UUIDV4)
   @PrimaryKey
@@ -159,11 +221,12 @@ export class Match extends Model<InferAttributes<Match>, InferCreationAttributes
   declare round: typeof Round;
 
   @Attribute(DataTypes.INTEGER)
-  declare length: number;
+  @Default(1)
+  declare length: CreationOptional<number>;
 
   @Attribute(DataTypes.STRING)
   @Default("")
-  declare vod: CreationOptional<string>;
+  declare vod?: CreationOptional<string>;
 
   /** Declared by inverse relationship in {@link Match.matches} */
   declare players?: NonAttribute<Player[]>;
@@ -177,6 +240,12 @@ export class Match extends Model<InferAttributes<Match>, InferCreationAttributes
   declare hasPlayer: BelongsToManyHasAssociationMixin<Player, Player["player_id"]>;
   declare hasPlayers: BelongsToManyHasAssociationsMixin<Player, Player["player_id"]>;
   declare countPlayers: BelongsToManyCountAssociationsMixin<Player>;
+
+  @HasMany(() => Score, {
+    sourceKey: "match_id",
+    foreignKey: { name: "match_id", columnName: "match_id", allowNull: false },
+  })
+  declare scores?: NonAttribute<Score[]>;
 
   declare getScores: HasManyGetAssociationsMixin<Score>;
 
@@ -192,7 +261,10 @@ export class Match extends Model<InferAttributes<Match>, InferCreationAttributes
 }
 
 @Table({ timestamps: false })
-export class Score extends Model<InferAttributes<Score>, InferCreationAttributes<Score>> {
+export class Score
+  extends Model<InferAttributes<Score>, InferCreationAttributes<Score>>
+  implements ScoreResponse
+{
   @Attribute(DataTypes.UUID)
   @Default(DataTypes.UUIDV4)
   @PrimaryKey
@@ -206,7 +278,7 @@ export class Score extends Model<InferAttributes<Score>, InferCreationAttributes
 
   @Attribute(DataTypes.STRING)
   @AllowNull(true)
-  declare points: string;
+  declare points?: string;
 
   declare getMatch: BelongsToGetAssociationMixin<Match>;
   declare getPlayer: BelongsToGetAssociationMixin<Player>;
