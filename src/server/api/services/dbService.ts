@@ -1,15 +1,5 @@
-import {
-  Attributes,
-  CreationAttributes,
-  Model,
-  ModelAttributes,
-  ModelStatic,
-  Op,
-  UpdateValues,
-  ValidationError,
-} from "@sequelize/core";
-import { Match, Player, Score } from "../../../data/models.js";
-import { PlayerStatus } from "../../../data/types.js";
+import { CreationAttributes, Op, UpdateValues } from "@sequelize/core";
+import { Match, Player } from "../../../shared/models.js";
 
 const partialMatchInclude = {
   include: [
@@ -89,7 +79,7 @@ export async function getMatch({ id, extras = false }: SingleGetOptions) {
 }
 export async function getMatches({ ids, extras = false }: MultiGetOptions) {
   return await Match.findAll({
-    where: { match_id: { [Op.in]: ids } },
+    where: ids ? { match_id: { [Op.in]: ids } } : {},
     ...includeIf(partialPlayerInclude, extras),
   });
 }

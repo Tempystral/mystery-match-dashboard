@@ -1,15 +1,16 @@
+import { UpdateValues, ValidationError } from "@sequelize/core";
 import express from "express";
-import sheets from "../services/sheetsService.js";
-import * as database from "../services/dbService.js";
-import { Match } from "../../../data/models.js";
-import { Attributes, UpdateValues, ValidationError } from "@sequelize/core";
 import { body } from "express-validator";
+import { Match } from "../../../shared/models.js";
+import * as database from "../services/dbService.js";
+import sheets from "../services/sheetsService.js";
 
 const router = express.Router();
 
 // Get matches
 router.get("/", async (req, res, next) => {
   const matches = await database.getMatches({ extras: true });
+  res.send(matches);
 });
 
 // Search matches

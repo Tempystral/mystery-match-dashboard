@@ -1,10 +1,10 @@
-import { GoogleSpreadsheet, GoogleSpreadsheetWorksheet, GoogleSpreadsheetRow } from "google-spreadsheet";
 import { JWT } from "google-auth-library";
+import { GoogleSpreadsheet, GoogleSpreadsheetRow } from "google-spreadsheet";
 
-import { range } from "discord.js";
-import { Player, Match, Score } from "../../../data/models.js";
 import { Op } from "@sequelize/core";
-import { format, parse } from "date-fns";
+import { parse } from "date-fns";
+import { range } from "discord.js";
+import { Match, Player } from "../../../shared/models.js";
 
 class GoogleSheetsService {
   #auth?: JWT;

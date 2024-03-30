@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { matchRouter, playerRouter } from "./routes/index.js";
 import { bot } from "../setup.js";
-import { Match, Score, Player } from "../../data/models.js";
+import { Match, Score, Player } from "../../shared/models.js";
 
 const router = Router({ caseSensitive: true });
 

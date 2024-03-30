@@ -1,10 +1,11 @@
 import { Events, IntentsBitField } from "discord.js";
 import { Client } from "discordx";
-import { Match, Score, Player } from "../data/models.js";
+import { Match, Score, Player } from "../shared/models.js";
 import { Sequelize } from "@sequelize/core";
 
 import express from "express";
 import helmet from "helmet";
+import cors from "cors";
 import router from "./api/router.js";
 
 function setup_web() {
@@ -12,6 +13,7 @@ function setup_web() {
 
   app.use(express.json());
   app.use(helmet());
+  app.use(cors({}));
   app.use(router);
 
   const port = process.env.PORT ?? 3000;
