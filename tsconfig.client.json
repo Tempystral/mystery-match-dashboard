@@ -27,6 +27,11 @@
     "skipLibCheck": true,
     "pretty": true,
     "sourceMap": true,
+    "paths": {
+      "@client/*": [
+        "./src/client/*"
+      ],
+    },
   },
   "references": [
     {

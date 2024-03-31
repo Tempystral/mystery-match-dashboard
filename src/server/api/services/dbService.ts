@@ -80,6 +80,7 @@ export async function getMatch({ id, extras = false }: SingleGetOptions) {
 export async function getMatches({ ids, extras = false }: MultiGetOptions) {
   return await Match.findAll({
     where: ids ? { match_id: { [Op.in]: ids } } : {},
+    order: ["date"],
     ...includeIf(partialPlayerInclude, extras),
   });
 }

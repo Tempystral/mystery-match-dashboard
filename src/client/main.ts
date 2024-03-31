@@ -15,12 +15,15 @@ import { VueQueryPlugin } from "@tanstack/vue-query";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { fab } from "@fortawesome/free-brands-svg-icons";
 import { fas } from "@fortawesome/free-solid-svg-icons";
+import { far } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import { enUS } from "date-fns/locale/en-US";
 
 const app = createApp(App);
 app.component("font-awesome-icon", FontAwesomeIcon);
 library.add(fab);
 library.add(fas);
+library.add(far);
 
 const vuetify = createVuetify({
   components,
@@ -36,7 +39,8 @@ const vuetify = createVuetify({
     },
   },
   date: {
-    adapter: DateFnsAdapter,
+    adapter: new DateFnsAdapter({ locale: enUS }),
+    locale: enUS,
   },
 });
 

@@ -1,25 +1,31 @@
 <script setup lang="ts">
-    import DateFnsUtils from '@date-io/date-fns/build/date-fns-utils';
-  import { computed, ref } from 'vue';
-    import { useDate } from 'vuetify';
+import DateFnsUtils from '@date-io/date-fns/build/date-fns-utils';
+import { ref } from 'vue';
+import { useDate } from 'vuetify';
+import { MatchResponse } from '../../../shared/models';
+import { capitalize } from "@client/util/utils.js"
 
-    const date = useDate() as DateFnsUtils;
-    const nextMatch = ref(date.date(new Date("March 22, 2024, 2:00 PM EDT")));
+const dateUtil = useDate() as DateFnsUtils;
 
-    const players = [
-      { name: "player1", icon: "fab fa-discord" },
-      { name: "player2", icon: "fab fa-discord" },
-      { name: "player3", icon: "fab fa-discord" },
-      { name: "player4", icon: "fab fa-discord" }
-    ];
+function toDateString(date: Date) {
+  return dateUtil.date(date)?.toDateString();
+}
+
+function toTimeString(date: Date) {
+  return dateUtil.date(date)?.toLocaleTimeString();
+}
+
+const props = defineProps<{
+  match: MatchResponse
+}>();
 </script>
 <template>
   <v-card rounded color="indigo-darken-3" variant="elevated" title="Next match" :subtitle="`Round ${1}`">
     <v-card-text>
-      <div class="text-h4">{{ nextMatch?.toDateString() }}</div>
+      <div class="text-h4">{{ toDateString(match.date) }}</div>
       <div class="d-flex justify-end">
         <v-sheet rounded color="transparent">
-          <div class="text-h5">{{ nextMatch?.toLocaleTimeString() }}</div>
+          <div class="text-h5">{{ toTimeString(match.date) }}</div>
         </v-sheet>
       </div>
     </v-card-text>
@@ -28,17 +34,22 @@
         <v-col cols="5" class="pa-2">
           <v-label text="Gamemaster"></v-label>
           <v-divider class="ma-1" />
-          <p>Tempystral</p>
-          <!-- <v-list lines="one" class="fill-height">
-          <v-list-subheader title="Gamemaster" />
-          <v-list-item title="Tempystral" />
-        </v-list> -->
+          <span class="text-h5">{{ capitalize(match.gamemaster) }}</span>
         </v-col>
         <v-col cols="7" class="pa-2">
           <v-label text="Players"></v-label>
           <v-divider class="ma-1" />
           <div class="d-flex-wrap justify-center">
-            <v-chip v-for="(player, i) in players" :key="i" class="ma-1">{{ player.name }}</v-chip>
+            <v-chip
+                    v-if="match.players"
+                    v-for="(player, i) in match.players"
+                    :key="i"
+                    link
+                    color="indigo-accent-1"
+                    class="ma-1"
+                    append-icon="fab fa-twitch">
+              {{ player?.twitch_name }}
+            </v-chip>
           </div>
         </v-col>
       </v-row>
