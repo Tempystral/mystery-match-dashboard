@@ -1,20 +1,21 @@
 <script setup lang="ts">
-  import { useQuery } from '@tanstack/vue-query';
+  import { api } from '@client/util/request';
+  import { useMutation, useQuery } from '@tanstack/vue-query';
   import { ref } from 'vue';
   import { PlayerResponse, defaultPlayer } from '../../shared/response';
   import { PlayerStatus, PlayerStatusLabel } from '../../shared/types';
   import PlayerEditModal from "../components/PlayerEditModal.vue";
 
-  const fetchPlayers = async (): Promise<PlayerResponse[]> =>
-    await fetch("http://localhost:3000/players",
-      {
-        mode: 'cors',
-        method: "get",
-      }).then(response => response.json());
-
-  const { isPending, isError, isFetching, data: players, error, refetch } = useQuery({
+  const { isPending, data: players } = useQuery({
     queryKey: ["players"],
-    queryFn: fetchPlayers
+    queryFn: () => api.get<PlayerResponse[]>("players", {})
+  });
+
+  useMutation({
+    mutationFn: (player: PlayerResponse) => api.post<PlayerResponse>("players", player),
+    onError(error, variables, context) {
+
+    },
   })
 
   const showDialog = ref(false);

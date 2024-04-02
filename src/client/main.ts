@@ -1,8 +1,8 @@
+import DateFnsAdapter from "@date-io/date-fns";
 import { createPinia } from "pinia";
 import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
-import DateFnsAdapter from "@date-io/date-fns";
 
 import { createVuetify } from "vuetify";
 import * as components from "vuetify/components";
@@ -14,8 +14,8 @@ import { VueQueryPlugin } from "@tanstack/vue-query";
 
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { fab } from "@fortawesome/free-brands-svg-icons";
-import { fas } from "@fortawesome/free-solid-svg-icons";
 import { far } from "@fortawesome/free-regular-svg-icons";
+import { fas } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { enUS } from "date-fns/locale/en-US";
 

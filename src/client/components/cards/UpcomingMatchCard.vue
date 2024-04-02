@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import DateFnsUtils from '@date-io/date-fns/build/date-fns-utils';
-  import { ref } from 'vue';
   import { useDate } from 'vuetify';
   import { MatchResponse } from '../../../shared/response';
   import { capitalize } from "@client/util/utils.js"

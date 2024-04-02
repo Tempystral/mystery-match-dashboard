@@ -1,6 +1,6 @@
 import { PlayerStatus, Round } from "./types.js";
 
-export interface PlayerResponse {
+export type PlayerResponse = {
   player_id: string;
   twitch_name: string;
   twitch_alt?: string;
@@ -17,7 +17,7 @@ export interface PlayerResponse {
   matches: Partial<MatchResponse[]>;
   Score: ScoreResponse;
   total_score: number;
-}
+};
 
 export const defaultPlayer: PlayerResponse = {
   player_id: "",
@@ -38,7 +38,7 @@ export const defaultPlayer: PlayerResponse = {
   total_score: 0,
 };
 
-export interface MatchResponse {
+export type MatchResponse = {
   match_id: string;
   tournament: string;
   date: Date;
@@ -50,8 +50,8 @@ export interface MatchResponse {
   vod?: string;
   players?: Partial<PlayerResponse[]>;
   Score?: ScoreResponse;
-}
+};
 
-export interface ScoreResponse {
+export type ScoreResponse = {
   points?: string;
-}
+};
