@@ -33,52 +33,9 @@ import {
   Unique,
 } from "@sequelize/core/decorators-legacy";
 import { NotEmpty } from "@sequelize/validator.js";
-import { PlayerStatus, Round } from "./types.js";
+import { Outcome, PlayerStatus, Round } from "./types.js";
 
-type ReadOnly<T> = {
-  readonly [K in keyof T]: T[K];
-};
-
-export interface PlayerResponse {
-  player_id?: string;
-  twitch_name: string;
-  twitch_alt?: string;
-  discord_name: string;
-  twitter_name?: string;
-  in_brackets: boolean;
-  status: PlayerStatus;
-  pronunciation_notes?: string;
-  pronouns?: string;
-  accessibility?: string;
-  timezone?: string;
-  availability?: string;
-  notes?: string;
-  matches?: Partial<MatchResponse[]>;
-  Score?: ScoreResponse;
-}
-
-export interface MatchResponse {
-  match_id: string;
-  tournament: string;
-  date: Date;
-  game?: string;
-  platform?: string;
-  gamemaster?: string;
-  round?: typeof Round;
-  length?: number;
-  vod?: string;
-  players?: Partial<PlayerResponse[]>;
-  Score?: ScoreResponse;
-}
-
-export interface ScoreResponse {
-  points?: string;
-}
-
-export class Player
-  extends Model<InferAttributes<Player>, InferCreationAttributes<Player>>
-  implements PlayerResponse
-{
+export class Player extends Model<InferAttributes<Player>, InferCreationAttributes<Player>> {
   @Attribute(DataTypes.UUID)
   @Default(DataTypes.UUIDV4)
   @PrimaryKey
@@ -183,10 +140,7 @@ export class Player
   declare getScores: HasManyGetAssociationsMixin<Score>;
 }
 
-export class Match
-  extends Model<InferAttributes<Match>, InferCreationAttributes<Match>>
-  implements MatchResponse
-{
+export class Match extends Model<InferAttributes<Match>, InferCreationAttributes<Match>> {
   @Attribute(DataTypes.UUID)
   @Default(DataTypes.UUIDV4)
   @PrimaryKey
@@ -261,10 +215,7 @@ export class Match
 }
 
 @Table({ timestamps: false })
-export class Score
-  extends Model<InferAttributes<Score>, InferCreationAttributes<Score>>
-  implements ScoreResponse
-{
+export class Score extends Model<InferAttributes<Score>, InferCreationAttributes<Score>> {
   @Attribute(DataTypes.UUID)
   @Default(DataTypes.UUIDV4)
   @PrimaryKey
@@ -277,8 +228,12 @@ export class Score
   declare match_id: ForeignKey<string>;
 
   @Attribute(DataTypes.STRING)
-  @AllowNull(true)
-  declare points?: string;
+  @AllowNull
+  declare points: string;
+
+  @Attribute(DataTypes.STRING)
+  @AllowNull
+  declare outcome: typeof Outcome;
 
   declare getMatch: BelongsToGetAssociationMixin<Match>;
   declare getPlayer: BelongsToGetAssociationMixin<Player>;

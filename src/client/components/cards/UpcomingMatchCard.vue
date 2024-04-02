@@ -1,23 +1,23 @@
 <script setup lang="ts">
-import DateFnsUtils from '@date-io/date-fns/build/date-fns-utils';
-import { ref } from 'vue';
-import { useDate } from 'vuetify';
-import { MatchResponse } from '../../../shared/models';
-import { capitalize } from "@client/util/utils.js"
+  import DateFnsUtils from '@date-io/date-fns/build/date-fns-utils';
+  import { ref } from 'vue';
+  import { useDate } from 'vuetify';
+  import { MatchResponse } from '../../../shared/response';
+  import { capitalize } from "@client/util/utils.js"
 
-const dateUtil = useDate() as DateFnsUtils;
+  const dateUtil = useDate() as DateFnsUtils;
 
-function toDateString(date: Date) {
-  return dateUtil.date(date)?.toDateString();
-}
+  function toDateString(date: Date) {
+    return dateUtil.date(date)?.toDateString();
+  }
 
-function toTimeString(date: Date) {
-  return dateUtil.date(date)?.toLocaleTimeString();
-}
+  function toTimeString(date: Date) {
+    return dateUtil.date(date)?.toLocaleTimeString();
+  }
 
-const props = defineProps<{
-  match: MatchResponse
-}>();
+  const props = defineProps<{
+    match: MatchResponse
+  }>();
 </script>
 <template>
   <v-card rounded color="indigo-darken-3" variant="elevated" title="Next match" :subtitle="`Round ${1}`">
@@ -41,13 +41,13 @@ const props = defineProps<{
           <v-divider class="ma-1" />
           <div class="d-flex-wrap justify-center">
             <v-chip
-                    v-if="match.players"
-                    v-for="(player, i) in match.players"
-                    :key="i"
-                    link
-                    color="indigo-accent-1"
-                    class="ma-1"
-                    append-icon="fab fa-twitch">
+              v-if="match.players"
+              v-for="(player, i) in match.players"
+              :key="i"
+              link
+              color="indigo-accent-1"
+              class="ma-1"
+              append-icon="fab fa-twitch">
               {{ player?.twitch_name }}
             </v-chip>
           </div>

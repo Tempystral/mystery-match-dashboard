@@ -32,3 +32,14 @@ export const PlayerStatusLabel: { [key in PlayerStatus]: string } = {
   [PlayerStatus.ELIMINATED]: "Eliminated",
   [PlayerStatus.DROPPED_OUT]: "Dropped Out",
 };
+
+export enum Outcome {
+  SCORE = "SCORE",
+  WIN = "WIN",
+  LOSE = "LOSE",
+  MULLIGAN = "MULL",
+  DISQUALIFIED = "DQED",
+  FORFEIT = "FRFT",
+  ZOMBIE = "ZOMB",
+  LIVING_DEAD = "LVDD",
+}

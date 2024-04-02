@@ -1,43 +1,54 @@
 <script setup lang="ts">
-import { useQuery } from '@tanstack/vue-query';
-import { ref } from 'vue';
-import { PlayerResponse } from '../../shared/models';
-import { PlayerStatusLabel } from '../../shared/types';
+  import { useQuery } from '@tanstack/vue-query';
+  import { ref } from 'vue';
+  import { PlayerResponse, defaultPlayer } from '../../shared/response';
+  import { PlayerStatus, PlayerStatusLabel } from '../../shared/types';
+  import PlayerEditModal from "../components/PlayerEditModal.vue";
 
-const fetchPlayers = async (): Promise<PlayerResponse[]> =>
-  await fetch("http://localhost:3000/players",
-    {
-      mode: 'cors',
-      method: "get",
-    }).then(response => response.json());
+  const fetchPlayers = async (): Promise<PlayerResponse[]> =>
+    await fetch("http://localhost:3000/players",
+      {
+        mode: 'cors',
+        method: "get",
+      }).then(response => response.json());
 
-const { isPending, isError, isFetching, data, error, refetch } = useQuery({
-  queryKey: ["players"],
-  queryFn: fetchPlayers
-})
+  const { isPending, isError, isFetching, data: players, error, refetch } = useQuery({
+    queryKey: ["players"],
+    queryFn: fetchPlayers
+  })
 
-const editItem = (player: PlayerResponse) => { }
-const deleteItem = (player: PlayerResponse) => { }
+  const showDialog = ref(false);
+  const editIndex = ref(-1);
+  const editedItem = ref<PlayerResponse>(defaultPlayer as PlayerResponse);
 
-const headers = ref([
-  { key: "twitch_name", title: "Twitch" },
-  { key: "twitch_alt", title: "Alt?" },
-  { key: "discord_name", title: "Discord" },
-  { key: "status", title: "Status", value: (item: PlayerResponse) => PlayerStatusLabel[item.status] },
-  { key: "in_brackets", title: "In Brackets?" },
-  { key: "matches", title: "Matches Played", value: (item: PlayerResponse) => item.matches?.length },
-  { key: "total_score", title: "Total Points" },
-  { key: "actions", title: "Actions", sortable: false },
-]);
+  const editPlayer = (player: PlayerResponse) => {
+    if (players.value != undefined) {
+    editIndex.value = players.value.indexOf(player) ?? -1;
+    editedItem.value = Object.assign({}, player);
+    showDialog.value = true;
+    }
+  }
+  const deletePlayer = (player: PlayerResponse) => { }
+
+  const headers = ref([
+    { key: "twitch_name", title: "Twitch" },
+    { key: "twitch_alt", title: "Alt?" },
+    { key: "discord_name", title: "Discord" },
+    { key: "status", title: "Status", value: (item: PlayerResponse) => PlayerStatusLabel[item.status as PlayerStatus] },
+    { key: "in_brackets", title: "In Brackets?" },
+    { key: "matches", title: "Matches Played", value: (item: PlayerResponse) => item.matches?.length },
+    { key: "total_score", title: "Total Points" },
+    { key: "actions", title: "Actions", sortable: false },
+  ]);
 </script>
 <template>
   <v-container class="bg-surface-accent">
     <v-card rounded variant="elevated">
       <v-data-table
-                    :headers="headers"
-                    :items="data"
-                    :loading="isPending"
-                    loading-text="Loading, please wait...">
+        :headers="headers"
+        :items="players"
+        :loading="isPending"
+        loading-text="Loading, please wait...">
         <template #loading>
           <v-skeleton-loader type="table-row@10" />
         </template>
@@ -51,12 +62,28 @@ const headers = ref([
         </template>
 
         <template #item.actions="{ item }">
-          <v-icon icon="fa fa-edit" size="medium" @click="editItem(item)" class="me-2" />
-          <v-icon icon="fa fa-trash" size="medium" @click="deleteItem(item)" />
+          <v-tooltip text="View matches" location="top">
+            <template #activator="{ props }">
+              <v-icon icon="fa fa-gamepad" size="medium" @click="" class="me-3" v-bind="props" />
+            </template>
+          </v-tooltip>
+          <v-tooltip text="Edit player" location="top">
+            <template #activator="{ props }">
+              <v-icon icon="fa fa-edit" size="medium" @click="editPlayer(item)" class="me-2" v-bind="props" />
+            </template>
+          </v-tooltip>
+          <v-tooltip text="Delete player" location="top">
+            <template #activator="{ props }">
+              <v-icon icon="fa fa-trash" size="medium" @click="deletePlayer(item)" v-bind="props" />
+            </template>
+          </v-tooltip>
         </template>
       </v-data-table>
     </v-card>
+
+    <v-dialog max-width="800px" v-model="showDialog">
+      <PlayerEditModal :player="editedItem" />
+    </v-dialog>
   </v-container>
 </template>
 <style lang="scss"></style>
-../../shared/data
