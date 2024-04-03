@@ -38,13 +38,11 @@ router.post("/", body().isObject(), async (req, res, next) => {
  */
 router.patch("/", body("value.match_id").exists({ values: "falsy" }).isUUID(), async (req, res, next) => {
   const [id, fields]: [string, UpdateValues<Match>] = req.body;
-  const [affectedRows] = await database.updateMatch(id, fields);
-  if (affectedRows < 1) {
-    return res.status(500).send("Could not update rows!");
-  } else if (affectedRows > 1) {
-    return res.status(500).send("What the fuck did you do");
+  const result = await database.updateMatch(id, fields);
+  if (!result) {
+    return res.status(500).send(`Could not update match with id ${fields.match_id}`);
   }
-  return res.status(200);
+  return res.status(200).send(result);
 });
 
 // Import

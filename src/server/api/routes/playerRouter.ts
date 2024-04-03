@@ -33,13 +33,11 @@ router.put("/", body().isObject(), async (req, res, next) => {
 // Update player
 router.patch("/", body("value.player_id").exists({ values: "falsy" }), async (req, res, next) => {
   const [id, fields]: [string, UpdateValues<Player>] = req.body;
-  const [affectedRows] = await database.updatePlayer(id, fields);
-  if (affectedRows < 1) {
-    return res.status(500).send("Could not update rows!");
-  } else if (affectedRows > 1) {
-    return res.status(500).send("What the fuck did you do");
+  const result = await database.updatePlayer(id, fields);
+  if (!result) {
+    return res.status(500).send(`Could not update player with id ${fields.player_id}`);
   }
-  return res.status(200);
+  return res.status(200).send(result);
 });
 
 // Import

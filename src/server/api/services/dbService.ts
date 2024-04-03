@@ -64,7 +64,8 @@ export async function createPlayers(players: CreationAttributes<Player>[]) {
 }
 
 export async function updatePlayer(id: string, player: UpdateValues<Player>) {
-  return await Player.update(player, { where: { player_id: id } });
+  const affectedPlayer = await Player.findByPk(id);
+  return await affectedPlayer?.update(player, { where: { player_id: id } });
 }
 
 export async function assignScore(match_id: string, player_id: string, score: string) {
@@ -72,6 +73,7 @@ export async function assignScore(match_id: string, player_id: string, score: st
     include: [{ model: Player, where: { player_id } }],
   });
   await match?.setScore(player_id, score);
+  return await match?.reload();
 }
 
 export async function getMatch({ id, extras = false }: SingleGetOptions) {
@@ -102,17 +104,20 @@ export async function createMatches(matches: CreationAttributes<Match>[]) {
 }
 
 export async function updateMatch(id: string, match: UpdateValues<Match>) {
-  return await Match.update(match, { where: { match_id: id } });
+  const affectedMatch = await Match.findByPk(id);
+  return await affectedMatch?.update(match, { where: { match_id: id } });
 }
 
 export async function addPlayersToMatch(match_id: string, player_ids: string[]) {
   const match = await Match.findByPk(match_id, { include: [Player] });
-  match?.addPlayers(player_ids);
+  await match?.addPlayers(player_ids);
+  return await match?.reload();
 }
 
 export async function removePlayersFromMatch(match_id: string, player_ids: string[]) {
   const match = await Match.findByPk(match_id, { include: [Player] });
-  match?.removePlayers(player_ids);
+  await match?.removePlayers(player_ids);
+  return await match?.reload();
 }
 
 export async function changeMatchPlayers(
