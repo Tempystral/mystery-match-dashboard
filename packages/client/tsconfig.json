@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ES2020",
-    "outDir": "build/client",
+    "outDir": ".build/client",
     "strict": true,
     "moduleResolution": "Node10",
     "jsx": "preserve",
@@ -28,20 +28,15 @@
     "sourceMap": true,
     "paths": {
       "@client/*": [
-        "./src/client/*"
+        "./src/*"
       ],
     },
   },
-  "references": [
-    {
-      "path": "src/shared"
-    }
-  ],
   "include": [
-    "src/client/**/*.ts",
-    "src/client/**/*.d.ts",
-    "src/client/**/*.vue",
-    "src/client/.eslintrc.json",
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.vue",
+    "src/.eslintrc.json",
     "./vite.config.ts",
   ],
   "exclude": [

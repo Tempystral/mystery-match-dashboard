@@ -4,8 +4,6 @@
     "module": "NodeNext",
     "rootDir": "./src",
     "outDir": "./build",
-    //"composite": true,
-    //"declarationDir": "build/types",
     "strict": true,
     "moduleResolution": "NodeNext",
     "jsx": "preserve",
@@ -31,13 +29,7 @@
     "node_modules"
   ],
   "include": [
-    "src/server/**/*.ts",
-    //"src/server/**/*.d.ts",
-  ],
-  "references": [
-    {
-      "path": "src/shared"
-    }
+    "src/**/*.ts",
   ],
   "ts-node": {
     "esm": true,

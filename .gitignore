@@ -7,7 +7,7 @@ yarn.lock
 tsconfig.server.tsbuildinfo
 
 # folders
-build
+**/build/*
 node_modules
 src/server/credentials.json
 database.sqlite

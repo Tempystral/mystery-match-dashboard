@@ -4,8 +4,8 @@
     "module": "NodeNext",
     "declaration": true,
     "declarationMap": true,
-    "outDir": "build/shared",
-    "composite": true,
+    "rootDir": "src",
+    "outDir": "build",
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "useDefineForClassFields": true,
@@ -13,6 +13,6 @@
     "sourceMap": true
   },
   "include": [
-    "./src/shared/**/*.ts"
+    "src/**/*.ts",
   ]
 }

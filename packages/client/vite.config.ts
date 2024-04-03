@@ -20,12 +20,7 @@ export default ({ mode = "DEV" }) => {
     server: {
       port: 5173,
     },
-    plugins: [
-      /* tsconfig({ filename: "tsconfig.client.json" }), */
-      vue(),
-      vuetify(),
-      checker({ vueTsc: { tsconfigPath: "tsconfig.client.json" } }),
-    ],
+    plugins: [vue(), vuetify(), checker({ vueTsc: { tsconfigPath: "tsconfig.json" } })],
     optimizeDeps: {
       exclude: ["@tanstack/vue-query"],
     },
