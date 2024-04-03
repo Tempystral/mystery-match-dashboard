@@ -19,6 +19,11 @@ export type PlayerResponse = {
   total_score: number;
 };
 
+export type PlayerUpdateRequest = {
+  player_id: string;
+  player: Partial<Omit<PlayerResponse, "player_id">>;
+};
+
 export const defaultPlayer: PlayerResponse = {
   player_id: "",
   twitch_name: "",

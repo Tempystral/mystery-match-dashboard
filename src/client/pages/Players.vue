@@ -2,21 +2,17 @@
   import { api } from '@client/util/request.js';
   import { useMutation, useQuery } from '@tanstack/vue-query';
   import { ref } from 'vue';
-  import { PlayerResponse, defaultPlayer } from '../../shared/response.js';
+  import { PlayerResponse, PlayerUpdateRequest, defaultPlayer } from '../../shared/response.js';
   import { PlayerStatus, PlayerStatusLabel } from '../../shared/types.js';
   import PlayerEditModal from "../components/PlayerEditModal.vue";
+  import { useMutatePlayer } from "../composables/mutations"
 
   const { isPending, data: players } = useQuery({
     queryKey: ["players"],
     queryFn: () => api.get<PlayerResponse[]>("/players", {})
   });
 
-  const { error: mutError, mutate, reset } = useMutation({
-    mutationFn: (player: PlayerResponse) => api.patch<PlayerResponse>("/players", player),
-    onError(error, variables, context) {
-
-    },
-  })
+  const { error: mutError, mutate, reset } = useMutatePlayer();
 
   const showDialog = ref(false);
   const editIndex = ref(-1);
@@ -82,9 +78,7 @@
       </v-data-table>
     </v-card>
 
-    <v-dialog max-width="800px" v-model="showDialog">
-      <PlayerEditModal :player="editedItem" />
-    </v-dialog>
+    <PlayerEditModal :player="editedItem" @updatePlayer="mutate($event)" v-model="showDialog" />
   </v-container>
 </template>
 <style lang="scss"></style>

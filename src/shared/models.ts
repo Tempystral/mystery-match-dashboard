@@ -94,7 +94,7 @@ export class Player extends Model<InferAttributes<Player>, InferCreationAttribut
 
   @Attribute(DataTypes.VIRTUAL(DataTypes.INTEGER, ["twitch_name"]))
   get total_score(): NonAttribute<number> {
-    const scores = this.matches?.flatMap((m) => m["Score"]);
+    const scores = this.matches?.flatMap((m) => m["Score"]) ?? [];
     return (
       scores.reduce((acc, curr) => {
         return Number(curr.points) ? acc + Number(curr.points) : 0;
