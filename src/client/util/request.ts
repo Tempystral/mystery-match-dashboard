@@ -28,7 +28,7 @@ const createQuery = (baseUrl: RequestInfo | URL = "", baseConfig?: RequestInit) 
   };
 };
 
-const query = createQuery(process.env.BACKEND_URL, {
+const query = createQuery(import.meta.env.VITE_BACKEND_URL, {
   mode: "cors",
   headers: {
     "Content-Type": "application/json",

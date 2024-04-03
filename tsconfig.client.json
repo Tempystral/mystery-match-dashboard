@@ -1,11 +1,10 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "ESNext",
+    "module": "ES2020",
     "outDir": "build/client",
-    //"rootDir": "src/client",
     "strict": true,
-    "moduleResolution": "node",
+    "moduleResolution": "Node10",
     "jsx": "preserve",
     "types": [
       "node",
@@ -14,7 +13,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
+    //"allowSyntheticDefaultImports": true,
     "useDefineForClassFields": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": false,
@@ -43,6 +42,7 @@
     "src/client/**/*.d.ts",
     "src/client/**/*.vue",
     "src/client/.eslintrc.json",
+    "./vite.config.ts",
   ],
   "exclude": [
     "build",

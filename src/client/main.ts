@@ -1,8 +1,7 @@
-import DateFnsAdapter from "@date-io/date-fns";
 import { createPinia } from "pinia";
 import { createApp } from "vue";
 import App from "./App.vue";
-import router from "./router";
+import router from "./router.js";
 
 import { createVuetify } from "vuetify";
 import * as components from "vuetify/components";
@@ -18,6 +17,7 @@ import { far } from "@fortawesome/free-regular-svg-icons";
 import { fas } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { enUS } from "date-fns/locale/en-US";
+import DateFnsUtils from "@date-io/date-fns";
 
 const app = createApp(App);
 app.component("font-awesome-icon", FontAwesomeIcon);
@@ -39,7 +39,7 @@ const vuetify = createVuetify({
     },
   },
   date: {
-    adapter: new DateFnsAdapter({ locale: enUS }),
+    adapter: new DateFnsUtils({ locale: enUS }),
     locale: enUS,
   },
 });

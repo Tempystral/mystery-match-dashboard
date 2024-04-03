@@ -2,8 +2,8 @@
   import { diff } from "deep-object-diff";
   import { clone, isEmpty } from "lodash-es";
   import { ref } from 'vue';
-  import { PlayerResponse } from '../../shared/response';
-  import { PlayerStatusLabel } from '../../shared/types';
+  import { PlayerResponse } from '../../shared/response.js';
+  import { PlayerStatusLabel } from '../../shared/types.js';
 
   const props = defineProps<{
     player: PlayerResponse

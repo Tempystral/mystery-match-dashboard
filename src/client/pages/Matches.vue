@@ -1,11 +1,11 @@
 <script setup lang="ts">
-  import DateFnsUtils from '@date-io/date-fns/build/date-fns-utils';
   import { useQuery } from '@tanstack/vue-query';
   import { ref } from 'vue';
-  import { MatchResponse } from '../../shared/response';
-  import { useDate } from 'vuetify/lib/framework.mjs';
+  import { MatchResponse } from '../../shared/response.js';
+  import DateFnsAdapter from "@date-io/date-fns";
+  import { useDate } from 'vuetify';
 
-  const dateUtil = useDate() as DateFnsUtils;
+  const dateUtil = useDate() as DateFnsAdapter;
 
   const fetchMatches = async (): Promise<MatchResponse[]> =>
     await fetch("http://localhost:3000/matches",

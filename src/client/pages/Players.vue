@@ -1,18 +1,18 @@
 <script setup lang="ts">
-  import { api } from '@client/util/request';
+  import { api } from '@client/util/request.js';
   import { useMutation, useQuery } from '@tanstack/vue-query';
   import { ref } from 'vue';
-  import { PlayerResponse, defaultPlayer } from '../../shared/response';
-  import { PlayerStatus, PlayerStatusLabel } from '../../shared/types';
+  import { PlayerResponse, defaultPlayer } from '../../shared/response.js';
+  import { PlayerStatus, PlayerStatusLabel } from '../../shared/types.js';
   import PlayerEditModal from "../components/PlayerEditModal.vue";
 
   const { isPending, data: players } = useQuery({
     queryKey: ["players"],
-    queryFn: () => api.get<PlayerResponse[]>("players", {})
+    queryFn: () => api.get<PlayerResponse[]>("/players", {})
   });
 
-  useMutation({
-    mutationFn: (player: PlayerResponse) => api.post<PlayerResponse>("players", player),
+  const { error: mutError, mutate, reset } = useMutation({
+    mutationFn: (player: PlayerResponse) => api.patch<PlayerResponse>("/players", player),
     onError(error, variables, context) {
 
     },
