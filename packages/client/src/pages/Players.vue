@@ -7,7 +7,7 @@
   import PlayerEditModal from "../components/PlayerEditModal.vue";
   import { useMutatePlayer } from "../composables/mutations"
 
-  const { isPending, data: players } = useQuery({
+  const { isPending, data: players, isRefetching } = useQuery({
     queryKey: ["players"],
     queryFn: () => api.get<PlayerResponse[]>("/players", {})
   });
@@ -44,7 +44,7 @@
       <v-data-table
         :headers="headers"
         :items="players"
-        :loading="isPending"
+        :loading="isPending || isRefetching"
         loading-text="Loading, please wait...">
         <template #loading>
           <v-skeleton-loader type="table-row@10" />

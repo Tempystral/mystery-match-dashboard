@@ -13,7 +13,11 @@
   <v-container fluid class="bg-surface-accent fill-height align-start">
     <v-row>
       <v-col cols="4">
-        <v-card rounded variant="flat" color="deep-purple-darken-1">A panel</v-card>
+        <v-card rounded variant="flat" color="deep-purple-darken-1">
+          <v-btn text="Clear data" class="ma-2" @click="() => api.get<void>('/clear', {})" />
+          <v-btn text="Import players" class="ma-2" @click="() => api.get<void>('/players/import', {})" />
+          <v-btn text="Import matches" class="ma-2" @click="() => api.get<void>('/matches/import', {})" />
+        </v-card>
       </v-col>
       <v-col cols="4"> </v-col>
       <v-col cols="4">

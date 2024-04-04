@@ -33,14 +33,17 @@
         console.log(changedValues);
         emit("updatePlayer", {player_id: props.player.player_id, player: changedValues});
       }
-      showDialog.value = false;
+      closeDialog();
     }
+
+    const closeDialog = () => showDialog.value = false;
 
     const statuses = Object.entries(PlayerStatusLabel).map(e => {return {title: e[1], value: e[0]}});
 </script>
 <template>
   <v-dialog max-width="800px" v-model="showDialog">
-    <v-card title="Edit Player">
+    <v-card rounded="lg">
+      <v-card-title>Edit Player</v-card-title>
       <v-card-text>
         <v-row>
           <v-col cols="6">
@@ -100,13 +103,25 @@
                   label="Pronouns"
                   v-model="editedPlayer.pronouns"
                   hide-details
-                  variant="outlined" />
+                  variant="outlined"
+                  prepend-icon="fas fa-user" />
               </v-col>
-              <v-col>
-                <v-select label="Status" :items="statuses" v-model="editedPlayer.status" variant="outlined" />
+              <v-col cols="12">
+                <v-select
+                  label="Status"
+                  :items="statuses"
+                  v-model="editedPlayer.status"
+                  variant="outlined"
+                  hide-details
+                  class="ms-10" />
               </v-col>
-              <v-col>
-                <v-checkbox label="In brackets?" v-model="editedPlayer.in_brackets" />
+              <v-col cols="12">
+                <v-checkbox
+                  label="In brackets?"
+                  v-model="editedPlayer.in_brackets"
+                  hide-details
+                  density="compact"
+                  class="ms-10" />
               </v-col>
             </v-row>
           </v-col>
@@ -117,10 +132,10 @@
           </v-col>
         </v-row>
         <v-row>
-          <v-col cols="6">
+          <v-col cols="4">
             <v-text-field label="Timezone" v-model="editedPlayer.timezone" hide-details variant="outlined" />
           </v-col>
-          <v-col cols="6">
+          <v-col cols="8">
             <v-text-field
               label="Availability"
               v-model="editedPlayer.availability"
@@ -138,7 +153,7 @@
           </v-col>
           <v-col cols="12">
             <v-textarea
-              label="Notes"
+              label="Player Notes"
               rows="2"
               auto-grow
               v-model="editedPlayer.notes"
@@ -149,7 +164,7 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer />
-        <v-btn variant="text" color="error" text="Cancel" />
+        <v-btn variant="text" color="error" text="Cancel" @click="closeDialog" />
         <v-btn variant="tonal" color="success" text="Save" @click="submit" />
       </v-card-actions>
     </v-card>
