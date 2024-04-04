@@ -172,7 +172,7 @@ export class Match extends Model<InferAttributes<Match>, InferCreationAttributes
 
   @Attribute(DataTypes.STRING)
   @Default("")
-  declare round: typeof Round;
+  declare round: Round;
 
   @Attribute(DataTypes.INTEGER)
   @Default(1)

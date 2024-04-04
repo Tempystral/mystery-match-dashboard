@@ -8,8 +8,8 @@
   "types": "build/main.d.ts",
   "scripts": {
     "build": "rm -rf ./build; tsc -b tsconfig.json",
-    "start": "node build/server/main.js --watch src/server/*.ts --transpile-only",
-    "watch": "npx tsx watch --clear-screen=false --tsconfig ./tsconfig.server.json ./src/server/dev.ts",
+    "start": "node build/main.js --watch src/*.ts --transpile-only",
+    "watch": "npx tsx watch --clear-screen=false --tsconfig ./tsconfig.json ./src/dev.ts",
     "clean": "rm -rf build/"
   },
   "dependencies": {

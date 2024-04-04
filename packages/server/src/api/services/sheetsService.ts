@@ -5,6 +5,7 @@ import { Op } from "@sequelize/core";
 import { parse } from "date-fns";
 import { range } from "discord.js";
 import { Match, Player } from "../../data/models.js";
+import { Round } from "@mmd/common";
 
 class GoogleSheetsService {
   #auth?: JWT;
@@ -87,6 +88,65 @@ class GoogleSheetsService {
     return parse(`${day.trim()} ${time.trim()}`, "EEEE, MMMM d, y hh:mmaaaaaa", new Date());
   }
 
+  private getRound(rows: GoogleSpreadsheetRow[]): Round {
+    const round = rows[0].get("Round") as string;
+    if (round.includes("Group")) {
+      const subround = rows[1].get("Round") as string;
+      switch (subround) {
+        case "Round 1":
+          return Round.GROUP_STAGE_R_1;
+        case "Round 2":
+          return Round.GROUP_STAGE_R_2;
+        case "Round 3":
+          return Round.GROUP_STAGE_R_3;
+        case "Round 4":
+          return Round.GROUP_STAGE_R_4;
+      }
+    } else if (round.includes("Tiebreakers")) {
+      return Round.TIEBREAKERS;
+    } else if (round.includes("Winner")) {
+      if (round.match(/Winner.*Final/)) {
+        return Round.WINNERS_FINALS;
+      } else {
+        const roundNum = Number(round.trim().at(-1));
+        switch (roundNum) {
+          case 1:
+            return Round.WINNERS_1;
+          case 2:
+            return Round.WINNERS_2;
+          case 3:
+            return Round.WINNERS_3;
+          case 4:
+            return Round.WINNERS_4;
+        }
+      }
+    } else if (round.includes("Loser")) {
+      if (round.match(/Loser.*Final/)) {
+        return Round.LOSERS_FINALS;
+      } else {
+        const roundNum = Number(round.trim().at(-1));
+        switch (roundNum) {
+          case 1:
+            return Round.LOSERS_1;
+          case 2:
+            return Round.LOSERS_2;
+          case 3:
+            return Round.LOSERS_3;
+          case 4:
+            return Round.LOSERS_4;
+          case 5:
+            return Round.LOSERS_5;
+          case 6:
+            return Round.LOSERS_6;
+          case 7:
+            return Round.LOSERS_7;
+        }
+      }
+    }
+    console.log(`Unknown round for value: ${round}`);
+    return Round.UNKNOWN;
+  }
+
   private async buildMatch(tourney: string, dayRow: GoogleSpreadsheetRow, rows: GoogleSpreadsheetRow[]) {
     const d = this.buildDate(dayRow.get("Time"), rows[0].get("Time"));
     const l = Number((rows[0].get("Length") as string).match(/\d+/)?.[0]);
@@ -101,7 +161,7 @@ class GoogleSheetsService {
         game: rows[0].get("Game"),
         platform: rows[0].get("Game Platform"),
         gamemaster: rows[0].get("GM"),
-        round: rows[0].get("Round"),
+        round: this.getRound(rows),
         length: l,
         vod: rows[0].get("VOD"),
       },

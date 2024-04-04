@@ -50,11 +50,30 @@ export type MatchResponse = {
   game?: string;
   platform?: string;
   gamemaster?: string;
-  round?: typeof Round;
+  round?: Round;
   length?: number;
   vod?: string;
   players?: Partial<PlayerResponse[]>;
   Score?: ScoreResponse;
+};
+
+export const defaultMatchResponse = {
+  match_id: "",
+  tournament: "",
+  date: new Date(0),
+  game: undefined,
+  platform: undefined,
+  gamemaster: undefined,
+  round: undefined,
+  length: undefined,
+  vod: undefined,
+  players: undefined,
+  Score: undefined,
+};
+
+export type MatchUpdateRequest = {
+  match_id: string;
+  match: Partial<Omit<MatchResponse, "match_id">>;
 };
 
 export type ScoreResponse = {

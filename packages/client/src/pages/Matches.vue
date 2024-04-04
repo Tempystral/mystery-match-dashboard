@@ -1,35 +1,44 @@
 <script setup lang="ts">
   import { useQuery } from '@tanstack/vue-query';
   import { ref } from 'vue';
-  import { MatchResponse } from "@mmd/common"
+  import { MatchResponse, RoundLabel, defaultMatchResponse } from "@mmd/common"
   import DateFnsAdapter from "@date-io/date-fns";
   import { useDate } from 'vuetify';
+  import { api } from '@client/util/request';
+  import { useMutateMatch } from '@client/composables/mutations';
+  import { Round } from '@mmd/common';
+
+  const { isPending, data: matches, isRefetching } = useQuery({
+    queryKey: ["matches"],
+    queryFn: () => api.get<MatchResponse[]>("/matches", {})
+  });
+
+  const { error: mutError, mutate, reset } = useMutateMatch();
+
+  const showDialog = ref(false);
+  const editIndex = ref(-1);
+  const editedItem = ref<MatchResponse>(defaultMatchResponse as MatchResponse);
+
+  const editPlayer = (match: MatchResponse) => {
+    if (matches.value != undefined) {
+    editIndex.value = matches.value.indexOf(match) ?? -1;
+    editedItem.value = Object.assign({}, match);
+    showDialog.value = true;
+    }
+  }
 
   const dateUtil = useDate() as DateFnsAdapter;
-
-  const fetchMatches = async (): Promise<MatchResponse[]> =>
-    await fetch("http://localhost:3000/matches",
-      {
-        mode: 'cors',
-        method: "get",
-      }).then(response => response.json());
-
-  const { isPending, isError, isFetching, data: matches, error, refetch } = useQuery({
-    queryKey: ["matches"],
-    queryFn: fetchMatches
-  })
-
   const formatDate = (item: MatchResponse) => dateUtil.format(item.date, "fullDate");
 
-  const editItem = (player: MatchResponse) => { }
-  const deleteItem = (player: MatchResponse) => { }
+  const editItem = (match: MatchResponse) => { }
+  const deleteItem = (match: MatchResponse) => { }
 
   const headers = ref([
     { key: "date", title: "Date", value: formatDate },
     { key: "game", title: "Game Name" },
     { key: "platform", title: "Platform" },
     { key: "gamemaster", title: "Gamemaster" },
-    { key: "round", title: "Round" },
+    { key: "round", title: "Round", value: (item: MatchResponse) => RoundLabel[item.round ?? Round.UNKNOWN]},
     { key: "vod", title: "VOD Link" },
     { key: "actions", title: "Actions", sortable: false },
   ]);
@@ -40,11 +49,7 @@
       <v-data-table
         :headers="headers"
         :items="matches"
-        show-select
-        select-strategy="single"
-        item-selectable="match_id"
-        return-object
-        :loading="isPending"
+        :loading="isPending || isRefetching"
         loading-text="Loading, please wait...">
         <template #loading>
           <v-skeleton-loader type="table-row@10" />
@@ -55,9 +60,10 @@
         </template>
 
         <template #item.vod="{ item }">
-          <a :href="item.vod" class="text-decoration-none"
-            >Link&nbsp;<v-icon icon="fa fa-link" size="tiny"
-          /></a>
+          <a :href="item.vod" class="text-decoration-none">
+            Link&nbsp;
+            <v-icon icon="fa fa-link" size="tiny" />
+          </a>
         </template>
 
         <template #item.actions="{ item }">
