@@ -7,11 +7,8 @@
   "module": "build/index.js",
   "types": "build/index.d.ts",
   "scripts": {
-    "build": "rm -rf ./build; tsc -b tsconfig.json"
-  },
-  "peerDependencies": {
-    "@sequelize/core": "^7.0.0-alpha.38",
-    "@sequelize/validator.js": "^7.0.0-alpha.39"
+    "build": "rm -rf ./build; tsc -b tsconfig.json",
+    "clean": "rm -rf build/"
   },
   "devDependencies": {
     "@types/node": "^20.10.1",

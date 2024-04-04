@@ -5,8 +5,8 @@ export default [
   js.configs.recommended,
   configs.eslintRecommended,
   {
-    files: ["src/**/*.ts", "src/**/*.js"],
-    ignores: [".eslintrc.js", "/src/assets/*", "/build/*", "index.html", ".node_modules/*", "*.config.js"],
+    files: ["packages/**/*.ts", "packages/**/*.js"],
+    ignores: [".eslintrc.js", "**/assets/*", "**/build/*", "**index.html", ".node_modules/*", "*.config.js"],
     languageOptions: {
       ecmaVersion: 2021,
       sourceType: "module",

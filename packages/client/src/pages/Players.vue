@@ -2,8 +2,8 @@
   import { api } from '@client/util/request.js';
   import { useMutation, useQuery } from '@tanstack/vue-query';
   import { ref } from 'vue';
-  import { PlayerResponse, PlayerUpdateRequest, defaultPlayer } from '../../shared/response.js';
-  import { PlayerStatus, PlayerStatusLabel } from '../../shared/types.js';
+  import { PlayerResponse, PlayerUpdateRequest, defaultPlayer } from "@mmd/common"
+  import { PlayerStatus, PlayerStatusLabel } from "@mmd/common"
   import PlayerEditModal from "../components/PlayerEditModal.vue";
   import { useMutatePlayer } from "../composables/mutations"
 

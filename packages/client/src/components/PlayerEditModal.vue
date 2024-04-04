@@ -2,8 +2,8 @@
     import { diff } from "deep-object-diff";
     import { clone, isEmpty } from "lodash-es";
     import { ref } from 'vue';
-    import { PlayerResponse, PlayerUpdateRequest, defaultPlayer } from '../../shared/response.js';
-    import { PlayerStatusLabel } from '../../shared/types.js';
+    import { PlayerResponse, PlayerUpdateRequest, defaultPlayer } from "@mmd/common"
+    import { PlayerStatusLabel } from "@mmd/common"
   import { watch } from "vue";
 
     const props = defineProps<{

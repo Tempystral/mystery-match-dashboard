@@ -1,5 +1,5 @@
 import { CreationAttributes, Op, UpdateValues } from "@sequelize/core";
-import { Match, Player } from "../../../shared/models.js";
+import { Match, Player } from "../../data/models.js";
 
 const partialMatchInclude = {
   include: [

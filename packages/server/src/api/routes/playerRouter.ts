@@ -1,7 +1,7 @@
 import { UpdateValues, ValidationError } from "@sequelize/core";
 import express from "express";
 import { body } from "express-validator";
-import { Player } from "../../../shared/models.js";
+import { Player } from "../../data/models.js";
 import * as database from "../services/dbService.js";
 import sheets from "../services/sheetsService.js";
 

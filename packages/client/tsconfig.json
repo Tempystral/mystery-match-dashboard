@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ES2020",
-    "outDir": ".build/client",
+    "outDir": "./build",
     "strict": true,
     "moduleResolution": "Node10",
     "jsx": "preserve",
@@ -13,7 +13,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
-    //"allowSyntheticDefaultImports": true,
     "useDefineForClassFields": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": false,
@@ -40,7 +39,6 @@
     "./vite.config.ts",
   ],
   "exclude": [
-    "build",
-    "node_modules"
+    "build"
   ],
 }

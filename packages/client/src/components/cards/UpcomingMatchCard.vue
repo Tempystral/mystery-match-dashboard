@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import DateFnsUtils from '@date-io/date-fns/build/index.js';
   import { useDate } from 'vuetify';
-  import { MatchResponse } from '../../../shared/response.js';
+  import { MatchResponse } from "@mmd/common"
   import { capitalize } from "@client/util/utils.js"
 
   const dateUtil = useDate() as DateFnsUtils;

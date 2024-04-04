@@ -1,6 +1,6 @@
 import { Events, IntentsBitField } from "discord.js";
 import { Client } from "discordx";
-import { Match, Score, Player } from "../shared/models.js";
+import { Match, Score, Player } from "./data/models.js";
 import { Sequelize } from "@sequelize/core";
 
 import express from "express";

@@ -4,7 +4,7 @@ import { GoogleSpreadsheet, GoogleSpreadsheetRow } from "google-spreadsheet";
 import { Op } from "@sequelize/core";
 import { parse } from "date-fns";
 import { range } from "discord.js";
-import { Match, Player } from "../../../shared/models.js";
+import { Match, Player } from "../../data/models.js";
 
 class GoogleSheetsService {
   #auth?: JWT;

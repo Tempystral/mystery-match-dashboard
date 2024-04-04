@@ -1,5 +1,5 @@
 import { useQueryClient, useMutation } from "@tanstack/vue-query";
-import { PlayerUpdateRequest, PlayerResponse } from "../../shared/response";
+import { PlayerUpdateRequest, PlayerResponse } from "@mmd/common";
 import { api } from "@client/util/request.js";
 export const useMutatePlayer = () => {
   const queryClient = useQueryClient();

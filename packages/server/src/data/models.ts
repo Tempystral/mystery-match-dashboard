@@ -33,7 +33,7 @@ import {
   Unique,
 } from "@sequelize/core/decorators-legacy";
 import { NotEmpty } from "@sequelize/validator.js";
-import { Outcome, PlayerStatus, Round } from "./types.js";
+import { Outcome, PlayerStatus, Round } from "@mmd/common";
 
 export class Player extends Model<InferAttributes<Player>, InferCreationAttributes<Player>> {
   @Attribute(DataTypes.UUID)
@@ -97,7 +97,7 @@ export class Player extends Model<InferAttributes<Player>, InferCreationAttribut
     const scores = this.matches?.flatMap((m) => m["Score"]) ?? [];
     return (
       scores.reduce((acc, curr) => {
-        return Number(curr.points) ? acc + Number(curr.points) : 0;
+        return Number(curr?.points) ? acc + Number(curr?.points) : 0;
       }, 0) ?? 0
     );
   }
@@ -200,6 +200,7 @@ export class Match extends Model<InferAttributes<Match>, InferCreationAttributes
     foreignKey: { name: "match_id", columnName: "match_id", allowNull: false },
   })
   declare scores?: NonAttribute<Score[]>;
+  declare Score?: NonAttribute<Score>;
 
   declare getScores: HasManyGetAssociationsMixin<Score>;
 

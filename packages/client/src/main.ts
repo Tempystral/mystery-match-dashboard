@@ -1,4 +1,3 @@
-import { createPinia } from "pinia";
 import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router.js";
@@ -44,4 +43,4 @@ const vuetify = createVuetify({
   },
 });
 
-app.use(vuetify).use(router).use(VueQueryPlugin).use(createPinia()).mount("#app");
+app.use(vuetify).use(router).use(VueQueryPlugin).mount("#app");

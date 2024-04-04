@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { useQuery } from '@tanstack/vue-query';
   import { ref } from 'vue';
-  import { MatchResponse } from '../../shared/response.js';
+  import { MatchResponse } from "@mmd/common"
   import DateFnsAdapter from "@date-io/date-fns";
   import { useDate } from 'vuetify';
 
