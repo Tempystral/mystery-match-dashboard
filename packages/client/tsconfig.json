@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ES2020",
+    "outDir": "./build",
+    "strict": true,
+    "moduleResolution": "Node10",
+    "jsx": "preserve",
+    "types": [
+      "node",
+      "vite/client"
+    ],
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "useDefineForClassFields": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": false,
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "allowJs": true,
+    "checkJs": false,
+    "skipLibCheck": true,
+    "pretty": true,
+    "sourceMap": true,
+    "paths": {
+      "@client/*": [
+        "./src/*"
+      ],
+    },
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.vue",
+    "src/.eslintrc.json",
+    "./vite.config.ts",
+  ],
+  "exclude": [
+    "build"
+  ],
+}
