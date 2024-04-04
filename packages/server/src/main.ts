@@ -1,5 +1,5 @@
-import { dirname, importx } from "@discordx/importer";
 import "dotenv/config";
+import { dirname, importx } from "@discordx/importer";
 import { bot } from "./setup.js";
 
 async function run() {
