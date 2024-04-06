@@ -20,7 +20,11 @@ export default async ({ mode = "DEV" }) => {
     server: {
       port: 5173,
     },
-    plugins: [vue(), vuetify(), checker({ vueTsc: { tsconfigPath: "./tsconfig.json" } })],
+    plugins: [
+      vue(),
+      vuetify({ styles: { configFile: "/assets/style/variables.scss" } }),
+      checker({ vueTsc: { tsconfigPath: "./tsconfig.json" } }),
+    ],
     optimizeDeps: {
       include: ["@mmd/common"],
       exclude: ["@tanstack/vue-query"],

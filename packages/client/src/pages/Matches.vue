@@ -7,6 +7,7 @@
   import { api } from '@client/util/request';
   import { useMutateMatch } from '@client/composables/mutations';
   import { Round } from '@mmd/common';
+  import MatchEditModal from '@client/components/MatchEditModal.vue';
 
   const { isPending, data: matches, isRefetching } = useQuery({
     queryKey: ["matches"],
@@ -19,7 +20,7 @@
   const editIndex = ref(-1);
   const editedItem = ref<MatchResponse>(defaultMatchResponse as MatchResponse);
 
-  const editPlayer = (match: MatchResponse) => {
+  const editMatch = (match: MatchResponse) => {
     if (matches.value != undefined) {
     editIndex.value = matches.value.indexOf(match) ?? -1;
     editedItem.value = Object.assign({}, match);
@@ -30,8 +31,7 @@
   const dateUtil = useDate() as DateFnsAdapter;
   const formatDate = (item: MatchResponse) => dateUtil.format(item.date, "fullDate");
 
-  const editItem = (match: MatchResponse) => { }
-  const deleteItem = (match: MatchResponse) => { }
+  const deleteMatch = (match: MatchResponse) => { }
 
   const headers = ref([
     { key: "date", title: "Date", value: formatDate },
@@ -67,11 +67,13 @@
         </template>
 
         <template #item.actions="{ item }">
-          <v-icon icon="fa fa-edit" size="medium" @click="editItem(item)" class="me-2" />
-          <v-icon icon="fa fa-trash" size="medium" @click="deleteItem(item)" />
+          <v-icon icon="fa fa-edit" size="medium" @click="editMatch(item)" class="me-2" />
+          <v-icon icon="fa fa-trash" size="medium" @click="deleteMatch(item)" />
         </template>
       </v-data-table>
     </v-card>
+
+    <match-edit-modal :match="editedItem" v-model="showDialog" />
   </v-container>
 </template>
 <style lang="scss"></style>

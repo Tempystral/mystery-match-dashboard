@@ -28,6 +28,9 @@ importers:
       '@tanstack/vue-query':
         specifier: ^5.28.9
         version: 5.28.13(vue@3.4.21)
+      '@vuepic/vue-datepicker':
+        specifier: ^8.3.2
+        version: 8.3.2(vue@3.4.21)
       cors:
         specifier: ^2.8.5
         version: 2.8.5
@@ -133,7 +136,7 @@ importers:
         version: 0.6.4(eslint@8.57.0)(typescript@5.3.2)(vite@5.2.8)(vue-tsc@1.8.27)
       vite-plugin-vuetify:
         specifier: ^2.0.2
-        version: 2.0.3(vite@5.2.8)(vue@3.4.21)(vuetify@3.5.14)
+        version: 2.0.3(vite@5.2.8)(vue@3.4.21)(vuetify@3.5.12)
       vue:
         specifier: ^3.4.21
         version: 3.4.21(typescript@5.3.2)
@@ -144,8 +147,8 @@ importers:
         specifier: ^1.8.22
         version: 1.8.27(typescript@5.3.2)
       vuetify:
-        specifier: ^3.5.8
-        version: 3.5.14(typescript@5.3.2)(vite-plugin-vuetify@2.0.3)(vue@3.4.21)
+        specifier: ^3.5.12
+        version: 3.5.12(typescript@5.3.2)(vite-plugin-vuetify@2.0.3)(vue@3.4.21)
 
   packages/common:
     devDependencies:
@@ -1714,7 +1717,17 @@ packages:
   /@vue/shared@3.4.21:
     resolution: {integrity: sha512-PuJe7vDIi6VYSinuEbUIQgMIRZGgM8e4R+G+/dQTk0X1NEdvgvvgv7m+rfmDH1gZzyA1OjjoWskvHlfRNfQf3g==}
 
-  /@vuetify/loader-shared@2.0.3(vue@3.4.21)(vuetify@3.5.14):
+  /@vuepic/vue-datepicker@8.3.2(vue@3.4.21):
+    resolution: {integrity: sha512-kOAUl6EVGU7BgNByjUuLRBUWvTBiYJHUj9jll7fTQSz/vNNkhYoo8vEH75zPMXyVmn1gRmeoom4cMl77GtNraw==}
+    engines: {node: '>=18.12.0'}
+    peerDependencies:
+      vue: '>=3.2.0'
+    dependencies:
+      date-fns: 3.6.0
+      vue: 3.4.21(typescript@5.3.2)
+    dev: false
+
+  /@vuetify/loader-shared@2.0.3(vue@3.4.21)(vuetify@3.5.12):
     resolution: {integrity: sha512-Ss3GC7eJYkp2SF6xVzsT7FAruEmdihmn4OCk2+UocREerlXKWgOKKzTN5PN3ZVN5q05jHHrsNhTuWbhN61Bpdg==}
     peerDependencies:
       vue: ^3.0.0
@@ -1722,7 +1735,7 @@ packages:
     dependencies:
       upath: 2.0.1
       vue: 3.4.21(typescript@5.3.2)
-      vuetify: 3.5.14(typescript@5.3.2)(vite-plugin-vuetify@2.0.3)(vue@3.4.21)
+      vuetify: 3.5.12(typescript@5.3.2)(vite-plugin-vuetify@2.0.3)(vue@3.4.21)
     dev: true
 
   /abbrev@1.1.1:
@@ -5376,7 +5389,7 @@ packages:
       vue-tsc: 1.8.27(typescript@5.3.2)
     dev: true
 
-  /vite-plugin-vuetify@2.0.3(vite@5.2.8)(vue@3.4.21)(vuetify@3.5.14):
+  /vite-plugin-vuetify@2.0.3(vite@5.2.8)(vue@3.4.21)(vuetify@3.5.12):
     resolution: {integrity: sha512-HbYajgGgb/noaVKNRhnnXIiQZrNXfNIeanUGAwXgOxL6h/KULS40Uf51Kyz8hNmdegF+DwjgXXI/8J1PNS83xw==}
     engines: {node: ^18.0.0 || >=20.0.0}
     peerDependencies:
@@ -5384,12 +5397,12 @@ packages:
       vue: ^3.0.0
       vuetify: ^3.0.0
     dependencies:
-      '@vuetify/loader-shared': 2.0.3(vue@3.4.21)(vuetify@3.5.14)
+      '@vuetify/loader-shared': 2.0.3(vue@3.4.21)(vuetify@3.5.12)
       debug: 4.3.4(supports-color@5.5.0)
       upath: 2.0.1
       vite: 5.2.8(@types/node@20.12.4)(sass@1.74.1)
       vue: 3.4.21(typescript@5.3.2)
-      vuetify: 3.5.14(typescript@5.3.2)(vite-plugin-vuetify@2.0.3)(vue@3.4.21)
+      vuetify: 3.5.12(typescript@5.3.2)(vite-plugin-vuetify@2.0.3)(vue@3.4.21)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -5547,8 +5560,8 @@ packages:
       '@vue/shared': 3.4.21
       typescript: 5.3.2
 
-  /vuetify@3.5.14(typescript@5.3.2)(vite-plugin-vuetify@2.0.3)(vue@3.4.21):
-    resolution: {integrity: sha512-bmfid7K4D+wPi9h7sK4PxjmIB2tBzNuqlW14cs30iQ7GAphEeo/HYwn6aEdNK/Na+imhti8CJDDqdGs6SEfyXQ==}
+  /vuetify@3.5.12(typescript@5.3.2)(vite-plugin-vuetify@2.0.3)(vue@3.4.21):
+    resolution: {integrity: sha512-6Dv6hSQH4NpoIFSEn+GouexKZYMCgMhB1x/Bepp7vnDgnpy6xGj2OgNOp/eBTPiaNrsX9knMv310c2Y9FSEllw==}
     engines: {node: ^12.20 || >=14.13}
     peerDependencies:
       typescript: '>=4.7'
@@ -5567,7 +5580,7 @@ packages:
         optional: true
     dependencies:
       typescript: 5.3.2
-      vite-plugin-vuetify: 2.0.3(vite@5.2.8)(vue@3.4.21)(vuetify@3.5.14)
+      vite-plugin-vuetify: 2.0.3(vite@5.2.8)(vue@3.4.21)(vuetify@3.5.12)
       vue: 3.4.21(typescript@5.3.2)
     dev: true
 
