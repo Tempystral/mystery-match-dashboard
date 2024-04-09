@@ -9,10 +9,20 @@ const authenticate = (to: RouteLocationNormalized, from: RouteLocationNormalized
 };
 
 const routes: Array<RouteRecordRaw> = [
-  { name: "login", path: "/login", component: LoginComponent },
-  { name: "home", path: "/", component: HomeComponent, beforeEnter: authenticate },
-  { name: "matches", path: "/matches", component: Matches, beforeEnter: authenticate },
-  { name: "players", path: "/players", component: Players, beforeEnter: authenticate },
+  { name: "login", path: "/login", component: () => import("./pages/Login.vue") },
+  { name: "home", path: "/", component: () => import("./pages/Home.vue"), beforeEnter: authenticate },
+  {
+    name: "matches",
+    path: "/matches",
+    component: () => import(/* webpackChunkName: "match-page" */ "./pages/Matches.vue"),
+    beforeEnter: authenticate,
+  },
+  {
+    name: "players",
+    path: "/players",
+    component: () => import(/* webpackChunkName: "player-page" */ "./pages/Players.vue"),
+    beforeEnter: authenticate,
+  },
 ];
 
 const router = createRouter({

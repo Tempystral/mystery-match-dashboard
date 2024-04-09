@@ -8,7 +8,7 @@ import * as directives from "vuetify/directives";
 import { aliases, fa } from "vuetify/iconsets/fa-svg";
 import "vuetify/styles";
 
-import { VueQueryPlugin } from "@tanstack/vue-query";
+import { VueQueryPlugin, VueQueryPluginOptions } from "@tanstack/vue-query";
 
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { fab } from "@fortawesome/free-brands-svg-icons";
@@ -42,5 +42,15 @@ const vuetify = createVuetify({
     locale: enUS,
   },
 });
+
+const queryOptions: VueQueryPluginOptions = {
+  queryClientConfig: {
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+      },
+    },
+  },
+};
 
 app.use(vuetify).use(router).use(VueQueryPlugin).mount("#app");
