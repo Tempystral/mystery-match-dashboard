@@ -16,6 +16,14 @@ export default async ({ mode = "DEV" }) => {
     build: {
       outDir: "./build",
       emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            "match-page": ["./src/pages/Matches.vue", "./src/components/MatchEditModal.vue"],
+            "player-page": ["./src/pages/Players.vue", "./src/components/PlayerEditModal.vue"],
+          },
+        },
+      },
     },
     server: {
       port: 5173,

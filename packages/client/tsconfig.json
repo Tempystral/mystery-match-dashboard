@@ -10,6 +10,11 @@
       "node",
       "vite/client"
     ],
+    "lib": [
+      "DOM",
+      "ES2020",
+      "ESNext"
+    ],
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
