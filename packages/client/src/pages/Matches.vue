@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { useQuery } from '@tanstack/vue-query';
   import { ref } from 'vue';
-  import { MatchResponse, RoundLabel, defaultMatchResponse } from "@mmd/common"
+  import { MatchResponse, PlayerResponse, RoundLabel, defaultMatchResponse } from "@mmd/common"
   import DateFnsAdapter from "@date-io/date-fns";
   import { useDate } from 'vuetify';
   import { api } from '@client/util/request';
@@ -15,6 +15,11 @@
   });
 
   const { error: mutError, mutate, reset } = useMutateMatch();
+
+  const { data: playerData, error: playerError, isLoading: playerLoading } = useQuery({
+    queryKey: ["players"],
+    queryFn: () => api.get<PlayerResponse[]>("/players", {})
+  });
 
   const showDialog = ref(false);
   const editIndex = ref(-1);
@@ -73,7 +78,13 @@
       </v-data-table>
     </v-card>
 
-    <match-edit-modal :match="editedItem" v-model="showDialog" />
+    <match-edit-modal
+      :match="editedItem"
+      :playerData="playerData"
+      :player-error="playerError"
+      :is-loading="playerLoading"
+      @update-match="mutate($event)"
+      v-model="showDialog" />
   </v-container>
 </template>
 <style lang="scss"></style>

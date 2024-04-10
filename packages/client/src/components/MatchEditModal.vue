@@ -1,57 +1,95 @@
 <script setup lang="ts">
   import { diff } from "deep-object-diff";
   import { clone, isEmpty } from "lodash-es";
-  import { computed, ref } from 'vue';
-  import { MatchResponse, MatchUpdateRequest, defaultMatchResponse, RoundLabel, Round } from "@mmd/common"
-  import { watch } from "vue";
-  import { VTimePicker } from "vuetify/lib/labs/components.mjs";
-  import { useDate } from "vuetify/lib/framework.mjs";
+  import { ref, watch, watchEffect, computed } from 'vue';
+  import { MatchResponse, MatchUpdateRequest, defaultMatchResponse, RoundLabel, PlayerResponse, ScoreResponse, defaultScoreResponse } from "@mmd/common"
   import DateFnsAdapter from "@date-io/date-fns";
   import VueDatePicker from "@vuepic/vue-datepicker";
   import '@vuepic/vue-datepicker/dist/main.css';
+  import { extractTime } from "@client/util/utils";
+  import { useDateTime } from "@client/composables/dateTime";
 
   const props = defineProps<{
-    match: MatchResponse
+    match: MatchResponse,
+    playerData?: PlayerResponse[],
+    isLoading: boolean,
+    playerError: Error | null
   }>();
 
   const emit = defineEmits<{
-    updatePlayer: [value: MatchUpdateRequest];
+    updateMatch: [value: MatchUpdateRequest];
   }>();
 
   const showDialog = defineModel<boolean>({});
+  const closeDialog = () => showDialog.value = false;
 
+  /* Match values */
   const editedMatch = ref<MatchResponse>(defaultMatchResponse);
+  const { dateModel, timeModel, editedDateTime } = useDateTime<DateFnsAdapter>();
 
-  const dateUtil = useDate() as DateFnsAdapter;
-  const editedDate = ref(dateUtil.date())
-  const editedTime = ref(dateUtil.date());
+  const rounds = Object.entries(RoundLabel).map(e => {return {title: e[1], value: e[0]}});
 
-  const fullEditedDate = computed(() => {
-    const newDate = dateUtil.date(editedDate.value);
-    newDate?.setTime(editedTime.value.getTime())
-    return newDate;
-  });
+  /* Player values */
+  const playerPanelOpen = ref("");
+  /** Stores the list of active players in a match */
+  const playerSlots = ref([] as PlayerResponse[]);
+  /** Pads the model to 4 slots */
+  const selectedPlayers = ref<{player: PlayerResponse, score: ScoreResponse}[]>([]);
+  const maxAllowedPlayers = computed(() => editedMatch.value.round.match(/GROUP|TIE|UNKNOWN/) ? 4 : 2);
 
-  watch(showDialog, (isShowing) => {
-    if (isShowing) {
-      editedMatch.value = clone(props.match);
-      editedDate.value = dateUtil.date(editedMatch.value.date);
-    }
+  // Initialize and clean up values on hide/show
+  watchEffect(() => {
+    showDialog.value ? setDefaults() : clear();
   })
+
+  function setDefaults() {
+      // Setup split time values
+      editedMatch.value = clone(props.match);
+      dateModel.value = editedMatch.value.date;
+      timeModel.value = extractTime(editedMatch.value.date);
+
+      // Reset player edit section
+      playerSlots.value = [];
+      selectedPlayers.value = [];
+
+      // Fill out existing players, if any
+      playerSlots.value = editedMatch.value.players ?? [];
+      playerPanelOpen.value = playerSlots.value.length ? `players` : ``
+  }
+
+  function clear() {
+    editedMatch.value = defaultMatchResponse;
+    dateModel.value = new Date();
+    timeModel.value = {hours: 0, minutes: 0, seconds: 0};
+
+    // Reset player edit section
+    playerSlots.value = [];
+    selectedPlayers.value = [];
+
+  }
 
   // Determine what, if any properties have changed and emit a request to update data.
   const submit = () => {
+    editedMatch.value.date = editedDateTime.value;
     const changedValues = diff(props.match, editedMatch.value);
     if (!isEmpty(changedValues)) {
       console.log(changedValues);
-      emit("updatePlayer", {match_id: props.match.match_id, match: changedValues});
+      emit("updateMatch", {match_id: props.match.match_id, match: changedValues});
     }
     closeDialog();
   }
 
-  const closeDialog = () => showDialog.value = false;
-
-  const rounds = Object.entries(RoundLabel).map(e => {return {title: e[1], value: e[0]}});
+  watch(playerSlots, newPlayers => {
+    while (playerSlots.value.length > maxAllowedPlayers.value) {
+      playerSlots.value.pop(); // Reduce allowed amount to 4
+    }
+    selectedPlayers.value = newPlayers.map(p => (
+      {
+        player: p,
+        score: { ... (p.Score ?? defaultScoreResponse) }
+      })
+    )
+  })
 </script>
 <template>
   <v-dialog max-width="800px" v-model="showDialog">
@@ -89,90 +127,162 @@
             </div>
           </v-col>
           <v-col cols="6">
-            <div id="right-side">
-              <v-row>
-                <v-col cols="12">
-                  <VueDatePicker
-                    v-model="editedDate"
-                    :is24="false"
-                    :clearable="false"
-                    text-input
-                    dark
-                    partial-flow
-                    :enable-time-picker="false"
-                    menu-class-name="elevation-18"
-                    class="mb-vdp">
-                    <template #dp-input="{ value }">
-                      <v-text-field
-                        label="Date"
-                        required
-                        hide-details
-                        :model-value="value"
-                        density="compact"
-                        variant="outlined"
-                        prepend-icon="fas fa-calendar-days" />
-                    </template>
-                  </VueDatePicker>
-                  <VueDatePicker
-                    v-model="editedTime"
-                    :is24="false"
-                    :clearable="false"
-                    text-input
-                    dark
-                    partial-flow
-                    time-picker
-                    menu-class-name="elevation-18"
-                    class="mb-vdp">
-                    <template #dp-input="{ value }">
-                      <v-text-field
-                        label="Time"
-                        required
-                        hide-details
-                        :model-value="value"
-                        density="compact"
-                        variant="outlined"
-                        prepend-icon="fas fa-clock" />
-                    </template>
-                  </VueDatePicker>
-                  <v-select
-                    label="Round"
-                    required
-                    :items="rounds"
-                    v-model="editedMatch.round"
-                    density="compact"
-                    variant="outlined"
-                    class="ms-10 mb-4" />
-                  <!-- <div class="text-caption ms-10">Length (Hours)</div> -->
-                  <v-slider
-                    :min="1"
-                    :max="2"
-                    :step="1"
-                    :tick-size="4"
-                    :ticks="{ 1: '1 Hour', 2: '2 Hours' }"
-                    show-ticks="always"
-                    v-model="editedMatch.length">
-                    <template #prepend>
-                      <v-icon class="ms-n2" icon="fas fa-stopwatch" />
-                      <div class="text-label ms-4 me-2">Length (Hours)</div>
-                    </template>
-                  </v-slider>
-                </v-col>
-              </v-row>
-            </div>
+            <v-row>
+              <v-col cols="12">
+                <VueDatePicker
+                  v-model="dateModel"
+                  :is24="false"
+                  :clearable="false"
+                  text-input
+                  dark
+                  partial-flow
+                  :enable-time-picker="false"
+                  menu-class-name="elevation-18"
+                  class="mb-vdp">
+                  <template #dp-input="{ value, onEnter }">
+                    <v-text-field
+                      label="Date"
+                      required
+                      hide-details
+                      :model-value="value"
+                      @keydown.enter="onEnter"
+                      density="compact"
+                      variant="outlined"
+                      prepend-icon="fas fa-calendar-days" />
+                  </template>
+                </VueDatePicker>
+                <VueDatePicker
+                  v-model="timeModel"
+                  :is24="false"
+                  :clearable="false"
+                  text-input
+                  dark
+                  partial-flow
+                  time-picker
+                  menu-class-name="elevation-18"
+                  class="mb-vdp">
+                  <template #dp-input="{ value, onEnter }">
+                    <v-text-field
+                      label="Time"
+                      required
+                      hide-details
+                      :model-value="value"
+                      @keydown.enter="onEnter"
+                      density="compact"
+                      variant="outlined"
+                      prepend-icon="fas fa-clock" />
+                  </template>
+                </VueDatePicker>
+                <v-select
+                  label="Round"
+                  required
+                  :items="rounds"
+                  v-model="editedMatch.round"
+                  density="compact"
+                  variant="outlined"
+                  class="ms-10 mb-4" />
+                <!-- <div class="text-caption ms-10">Length (Hours)</div> -->
+                <v-slider
+                  :min="1"
+                  :max="2"
+                  :step="1"
+                  :tick-size="4"
+                  :ticks="{ 1: '1 Hour', 2: '2 Hours' }"
+                  show-ticks="always"
+                  v-model="editedMatch.length">
+                  <template #prepend>
+                    <v-icon class="ms-n2" icon="fas fa-stopwatch" />
+                    <div class="text-label ms-4 me-2">Length (Hours)</div>
+                  </template>
+                </v-slider>
+              </v-col>
+            </v-row>
           </v-col>
         </v-row>
       </v-card-text>
 
       <v-divider class="mx-4 mb-2" />
 
-      <v-card-title>Players</v-card-title>
-      <div class="px-4">
-        <v-row>
-          <v-col cols="6" v-for="player of editedMatch.players" :key="player?.player_id">
-            <v-card color="black" class="ma-2">{{ player?.twitch_name }}</v-card>
-          </v-col>
-        </v-row>
-      </div>
+      <v-expansion-panels v-model="playerPanelOpen" flat>
+        <v-expansion-panel title="Players" value="players">
+          <template #title>
+            <v-card-title>Players</v-card-title>
+          </template>
+          <template #text>
+            <v-card-text>
+              <v-row>
+                <v-col>
+                  <v-combobox
+                    label="Players in match"
+                    variant="outlined"
+                    :loading="isLoading"
+                    v-model="playerSlots"
+                    :items="playerData ?? []"
+                    item-title="twitch_name"
+                    :item_props="true"
+                    return-object
+                    multiple
+                    chips>
+                  </v-combobox>
+                </v-col>
+              </v-row>
+              <v-divider v-if="playerSlots" class="mx-12 mb-6" />
+              <v-row>
+                <v-col
+                  cols="6"
+                  v-for="{player, score}, index in selectedPlayers"
+                  :key="player.player_id"
+                  :id="`player-${player.player_id}`">
+                  <v-card
+                    v-if="player"
+                    variant="elevated"
+                    color="light-blue-darken-4"
+                    elevation="8"
+                    class="pa-2">
+                    <v-row>
+                      <v-col cols="8" align-self="center">
+                        <v-label class="mx-2 font-weight-bold">
+                          {{ player?.twitch_name }}
+                        </v-label>
+                        <v-chip
+                          v-if="player?.pronouns"
+                          :text="player?.pronouns"
+                          size="small"
+                          variant="flat"
+                          color="white" />
+                      </v-col>
+                      <v-col>
+                        <!-- This field should change if the match type / outcome is not a score type -->
+                        <v-text-field v-model="score.points" hide-details variant="outlined" label="Score">
+                          <template #append-inner>
+                            <div class="d-flex flex-column justify-center">
+                              <v-icon
+                                icon="fas fa-chevron-up"
+                                size="tiny"
+                                role="button"
+                                aria-label="Increase Score"
+                                class="icon-hover"
+                                @click="score.points++" />
+                              <v-icon
+                                icon="fas fa-chevron-down"
+                                size="tiny"
+                                role="button"
+                                aria-label="Decrease Score"
+                                class="icon-hover"
+                                @click="score.points--" />
+                            </div>
+                          </template>
+                        </v-text-field>
+                      </v-col>
+                    </v-row>
+                  </v-card>
+                  <v-card v-else variant="outlined" class="pa-6">&nbsp;</v-card>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </template>
+        </v-expansion-panel>
+      </v-expansion-panels>
       <v-card-actions>
         <v-spacer />
         <v-btn variant="text" color="error" text="Cancel" @click="closeDialog" />
@@ -196,5 +306,12 @@
 
   .mb-vdp {
     margin-bottom: 22px;
+  }
+
+  .icon-hover {
+    opacity: .75;
+    &:hover {
+      opacity: 1;
+    }
   }
 </style>
