@@ -19,7 +19,7 @@ export default async ({ mode = "DEV" }) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            "match-page": ["./src/pages/Matches.vue", "./src/components/MatchEditModal.vue"],
+            "match-page": ["./src/pages/Matches.vue", "./src/components/MatchEditModal.vue", "@mmd/common"],
             "player-page": ["./src/pages/Players.vue", "./src/components/PlayerEditModal.vue"],
           },
         },
@@ -34,7 +34,7 @@ export default async ({ mode = "DEV" }) => {
       checker({ vueTsc: { tsconfigPath: "./tsconfig.json" } }),
     ],
     optimizeDeps: {
-      include: ["@mmd/common"],
+      //include: ["@mmd/common"],
       exclude: ["@tanstack/vue-query"],
     },
     resolve: {

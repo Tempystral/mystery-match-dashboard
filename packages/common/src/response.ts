@@ -1,6 +1,7 @@
+import { Outcome } from "./types.js";
 import { PlayerStatus, Round } from "./types.js";
 
-export type PlayerResponse = {
+type PlayerResponse = {
   player_id: string;
   twitch_name: string;
   twitch_alt?: string;
@@ -14,17 +15,18 @@ export type PlayerResponse = {
   timezone: string;
   availability: string;
   notes: string;
-  matches: Partial<MatchResponse[]>;
-  Score: ScoreResponse;
+  matches: Partial<MatchResponse>[];
+  Match?: Partial<MatchResponse>;
+  Score?: ScoreResponse;
   total_score: number;
 };
 
-export type PlayerUpdateRequest = {
+type PlayerUpdateRequest = {
   player_id: string;
   player: Partial<Omit<PlayerResponse, "player_id">>;
 };
 
-export const defaultPlayer: PlayerResponse = {
+const defaultPlayer: PlayerResponse = {
   player_id: "",
   twitch_name: "",
   twitch_alt: "",
@@ -39,43 +41,60 @@ export const defaultPlayer: PlayerResponse = {
   availability: "",
   notes: "",
   matches: [],
-  Score: {},
   total_score: 0,
 };
 
-export type MatchResponse = {
+type MatchResponse = {
   match_id: string;
   tournament: string;
   date: Date;
-  game?: string;
-  platform?: string;
-  gamemaster?: string;
-  round?: Round;
-  length?: number;
-  vod?: string;
-  players?: Partial<PlayerResponse[]>;
+  game: string;
+  platform: string;
+  gamemaster: string;
+  round: Round;
+  length: number;
+  vod: string;
+  players?: PlayerResponse[];
+  scores?: ScoreResponse[];
   Score?: ScoreResponse;
 };
 
-export const defaultMatchResponse = {
+type MatchResponseGroup = Record<string, MatchResponse>;
+type PlayerResponseGroup = Record<string, PlayerResponse>;
+
+const defaultMatchResponse: MatchResponse = {
   match_id: "",
   tournament: "",
   date: new Date(0),
   game: undefined,
-  platform: undefined,
-  gamemaster: undefined,
-  round: undefined,
-  length: undefined,
-  vod: undefined,
-  players: undefined,
-  Score: undefined,
+  platform: "",
+  gamemaster: "",
+  round: Round.UNKNOWN,
+  length: 1,
+  vod: "",
+  players: [],
+  scores: [],
 };
 
-export type MatchUpdateRequest = {
+type MatchUpdateRequest = {
   match_id: string;
   match: Partial<Omit<MatchResponse, "match_id">>;
 };
 
-export type ScoreResponse = {
-  points?: string;
+type ScoreResponse = {
+  score_id: string;
+  player_id: string;
+  points: number;
+  outcome: Outcome;
 };
+
+const defaultScoreResponse: ScoreResponse = {
+  score_id: "",
+  player_id: "",
+  points: 0,
+  outcome: Outcome.SCORE,
+};
+
+export { PlayerResponse, PlayerResponseGroup, PlayerUpdateRequest, defaultPlayer };
+export { MatchResponse, MatchResponseGroup, MatchUpdateRequest, defaultMatchResponse };
+export { ScoreResponse, defaultScoreResponse };

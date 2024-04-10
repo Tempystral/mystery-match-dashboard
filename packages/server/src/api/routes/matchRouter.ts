@@ -37,10 +37,10 @@ router.post("/", body().isObject(), async (req, res, next) => {
  *   }
  */
 router.patch("/", body("value.match_id").exists({ values: "falsy" }).isUUID(), async (req, res, next) => {
-  const [id, fields]: [string, UpdateValues<Match>] = req.body;
-  const result = await database.updateMatch(id, fields);
+  const { match_id, match }: { match_id: string; match: UpdateValues<Match> } = req.body;
+  const result = await database.updateMatch(match_id, match);
   if (!result) {
-    return res.status(500).send(`Could not update match with id ${fields.match_id}`);
+    return res.status(500).send(`Could not update match with id ${match_id}`);
   }
   return res.status(200).send(result);
 });

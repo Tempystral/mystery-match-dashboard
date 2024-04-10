@@ -180,7 +180,7 @@ export class Match extends Model<InferAttributes<Match>, InferCreationAttributes
 
   @Attribute(DataTypes.STRING)
   @Default("")
-  declare vod?: CreationOptional<string>;
+  declare vod: CreationOptional<string>;
 
   /** Declared by inverse relationship in {@link Match.matches} */
   declare players?: NonAttribute<Player[]>;
