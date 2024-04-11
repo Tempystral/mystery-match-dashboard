@@ -59,6 +59,20 @@ export async function getPlayers({ ids, extras = false }: MultiGetOptions) {
   });
 }
 
+export async function getPartialPlayers({ ids, extras = false }: MultiGetOptions) {
+  return await Player.findAll({
+    attributes: [
+      "player_id",
+      "twitch_name",
+      "discord_name",
+      "twitter_name",
+      "pronouns",
+      "in_brackets",
+      "status",
+    ],
+  });
+}
+
 export async function createPlayer(player: CreationAttributes<Player>) {
   try {
     return await Player.build(player).save();

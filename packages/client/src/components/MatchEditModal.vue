@@ -21,32 +21,32 @@
   }>();
 
   const showDialog = defineModel<boolean>({});
-  const closeDialog = () => showDialog.value = false;
+  function closeDialog(){
+    showDialog.value = false;
+  }
 
   /* Match values */
   const editedMatch = ref<MatchResponse>(defaultMatchResponse);
-  const { dateModel, timeModel, editedDateTime } = useDateTime<DateFnsAdapter>();
+  const { dateUtil, dateModel, timeModel, editedDateTime } = useDateTime<DateFnsAdapter>();
 
   const rounds = Object.entries(RoundLabel).map(e => {return {title: e[1], value: e[0]}});
 
   /* Player values */
   const playerPanelOpen = ref("");
-  /** Stores the list of active players in a match */
-  const playerSlots = ref([] as PlayerResponse[]);
   /** Pads the model to 4 slots */
   const selectedPlayers = ref<{player: PlayerResponse, score: ScoreResponse}[]>([]);
   const maxAllowedPlayers = computed(() => editedMatch.value.round.match(/GROUP|TIE|UNKNOWN/) ? 4 : 2);
 
-  watch(playerSlots, newPlayers => {
-    while (playerSlots.value.length > maxAllowedPlayers.value) {
-      playerSlots.value.pop(); // Reduce allowed amount to 4
+  watch(() => editedMatch.value.players, newPlayers => {
+    while (editedMatch.value.players.length > maxAllowedPlayers.value) {
+      editedMatch.value.players.pop(); // Reduce allowed amount to 4
     }
-    selectedPlayers.value = newPlayers.map(p => (
+    selectedPlayers.value = newPlayers?.map(p => (
       {
         player: p,
         score: { ... (p.Score ?? defaultScoreResponse) }
       })
-    )
+    ) ?? [];
   })
 
   // Initialize and clean up values on hide/show
@@ -61,12 +61,11 @@
       timeModel.value = extractTime(editedMatch.value.date);
 
       // Reset player edit section
-      playerSlots.value = [];
       selectedPlayers.value = [];
 
       // Fill out existing players, if any
-      playerSlots.value = [... editedMatch.value.players ?? []];
-      playerPanelOpen.value = playerSlots.value.length ? `players` : ``
+      //playerSlots.value = [... editedMatch.value.players ?? []];
+      playerPanelOpen.value = editedMatch.value.players.length ? `players` : ``
   }
 
   function clear() {
@@ -75,7 +74,6 @@
     timeModel.value = {hours: 0, minutes: 0, seconds: 0};
 
     // Reset player edit section
-    playerSlots.value = [];
     selectedPlayers.value = [];
   }
 
@@ -92,35 +90,39 @@
   const submit = () => {
     editedMatch.value.date = editedDateTime.value;
 
-    const finalPlayers = new Map<string, PlayerResponse>(selectedPlayers.value.map(p => [p.player.player_id, {...toRaw(p.player), Score: toRaw(p.score)}] ));
+    const finalPlayers = new Map<string, PlayerResponse>(selectedPlayers.value.map(p => (
+      [ p.player.player_id, { ...toRaw(p.player), Score: toRaw(p.score) } ]
+      ))); // We use toRaw here because we want to perform a comparison and diff doesn't understand reactive proxies
 
     const removedPlayers: string[] = [];
     const addedPlayers: NonNullable<MatchUpdateRequest["players"]>["set"] = [];
     // Find players in the original list NOT in the final one
-    toRaw(editedMatch.value.players)?.forEach(player => {
-      const fp = finalPlayers.get(player.player_id);
-      if (fp) {
+    toRaw(editedMatch.value.players).forEach(original => {
+      const final = finalPlayers.get(original.player_id);
+      if (final) {
         // If an element is present in both lists
-        if (!isEmpty(diff(player, fp))) { // And it's modified
-          console.log(`Adding to addedPlayers: ${player.player_id}`)
-          addedPlayers.push(...toChangedValues(fp)); // Add it to the added list
+        if (!isEmpty(diff(original, final))) { // And it's modified
+          console.log(`Adding to addedPlayers: ${original.player_id}`)
+          addedPlayers.push(...toChangedValues(final)); // Add it to the added list
         } // In either case, remove from finalPlayers since it's been counted
-        finalPlayers.delete(player.player_id);
+        finalPlayers.delete(original.player_id);
       } else { // If it's not in the final list, remove it
-        console.log(`Adding to removedPlayers: ${player.player_id}`)
-        removedPlayers.push(player.player_id);
+        console.log(`Adding to removedPlayers: ${original.player_id}`)
+        removedPlayers.push(original.player_id);
       }
     });
     // The remaining keys in finalPlayers are values we haven't counted
     // They belong to the final list but not the original
     const changed = toChangedValues(...Array.from(finalPlayers.values()));
-    console.log(`Adding remaining to addedPlayers: ${changed.map(val => val.player_id).join(", ")}`)
+    changed.length ? console.log(`Adding remaining to addedPlayers: ${changed.map(val => val.player_id).join(", ")}`) : null;
     addedPlayers.push(...changed);
 
     const changedValues = diff(props.match, editedMatch.value) as Partial<MatchResponse>;
-    // Dumb hack to remove date comparisons failing
+
     if (Object.hasOwn(changedValues, "date")) {
-      if (changedValues.date == editedMatch.value.date) {
+      // Dumb hack to remove date comparisons failing
+      // The original is actually text because it's from a database so we use dateFns
+      if (dateUtil.isEqual(changedValues.date, props.match.date)) {
         delete changedValues.date;
       }
     }
@@ -271,7 +273,7 @@
                     label="Players in match"
                     variant="outlined"
                     :loading="isLoading"
-                    v-model="playerSlots"
+                    v-model="editedMatch.players"
                     :items="playerData ?? []"
                     item-title="twitch_name"
                     :item_props="true"
@@ -281,11 +283,11 @@
                   </v-combobox>
                 </v-col>
               </v-row>
-              <v-divider v-if="playerSlots" class="mx-12 mb-6" />
+              <v-divider v-if="editedMatch.players" class="mx-12 mb-6" />
               <v-row>
                 <v-col
                   cols="6"
-                  v-for="{player, score}, index in selectedPlayers"
+                  v-for="{player, score} in selectedPlayers"
                   :key="player.player_id"
                   :id="`player-${player.player_id}`">
                   <v-card

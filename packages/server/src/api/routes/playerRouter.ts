@@ -25,16 +25,13 @@ then O(1) x4 looking up four players by ID in the client. It also makes my data 
  */
 router.get("/", async (req, res, next) => {
   const players = await database.getPlayers({ extras: true });
-  res.send(
-    players,
-    /* players.reduce(
-      (prev, player) => {
-        prev[player.player_id] = player;
-        return prev;
-      },
-      {} as Record<string, unknown>,
-    ), */
-  );
+  res.send(players);
+});
+
+// This is only for now - this should be replaced by an API that can accept arbitrary values via URL parameters
+router.get("/partial", async (req, res, next) => {
+  const players = await database.getPartialPlayers({ extras: true });
+  res.send(players);
 });
 
 // Search players

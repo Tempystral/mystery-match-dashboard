@@ -54,7 +54,7 @@ type MatchResponse = {
   round: Round;
   length: number;
   vod: string;
-  players?: PlayerResponse[];
+  players: PlayerResponse[]; // This field is marked as optional in models.ts but an empty list does actually get created when there's no data
   scores?: ScoreResponse[];
   Score?: ScoreResponse;
 };

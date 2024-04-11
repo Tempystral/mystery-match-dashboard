@@ -18,7 +18,7 @@
 
   const { data: playerData, error: playerError, isLoading: playerLoading } = useQuery({
     queryKey: ["players"],
-    queryFn: () => api.get<PlayerResponse[]>("/players", {})
+    queryFn: () => api.get<PlayerResponse[]>("/players/partial", {})
   });
 
   const showDialog = ref(false);
