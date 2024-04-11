@@ -2,7 +2,7 @@
   import { diff } from "deep-object-diff";
   import { clone, isEmpty } from "lodash-es";
   import { ref, toRaw, watch, computed } from 'vue';
-  import { MatchResponse, MatchUpdateRequest, defaultMatchResponse, RoundLabel, PlayerResponse, ScoreResponse, defaultScoreResponse } from "@mmd/common"
+  import { MatchResponse, MatchUpdateRequest, MatchPlayerUpdateValue, defaultMatchResponse, RoundLabel, PlayerResponse, ScoreResponse, defaultScoreResponse } from "@mmd/common"
   import DateFnsAdapter from "@date-io/date-fns";
   import VueDatePicker from "@vuepic/vue-datepicker";
   import '@vuepic/vue-datepicker/dist/main.css';
@@ -20,7 +20,7 @@
     updateMatch: [value: MatchUpdateRequest];
   }>();
 
-  const showDialog = defineModel<boolean>({});
+  const showDialog = defineModel<boolean>({ default: false });
   function closeDialog(){
     showDialog.value = false;
   }
@@ -30,23 +30,25 @@
   const { dateUtil, dateModel, timeModel, editedDateTime } = useDateTime<DateFnsAdapter>();
 
   const rounds = Object.entries(RoundLabel).map(e => {return {title: e[1], value: e[0]}});
+  const maxAllowedPlayers = computed(() => editedMatch.value.round.match(/GROUP|TIE|UNKNOWN/) ? 4 : 2);
 
   /* Player values */
   const playerPanelOpen = ref("");
   /** Pads the model to 4 slots */
-  const selectedPlayers = ref<{player: PlayerResponse, score: ScoreResponse}[]>([]);
-  const maxAllowedPlayers = computed(() => editedMatch.value.round.match(/GROUP|TIE|UNKNOWN/) ? 4 : 2);
+  interface PlayerAndScore {player: PlayerResponse, score: ScoreResponse}
+  const selectedPlayers = ref<(PlayerAndScore | undefined)[]>(Array(maxAllowedPlayers.value).fill(undefined));
 
   watch(() => editedMatch.value.players, newPlayers => {
     while (editedMatch.value.players.length > maxAllowedPlayers.value) {
       editedMatch.value.players.pop(); // Reduce allowed amount to 4
     }
-    selectedPlayers.value = newPlayers?.map(p => (
+    const struct = newPlayers?.map(p => (
       {
-        player: p,
-        score: { ... (p.Score ?? defaultScoreResponse) }
+        player: p, // The initial players come from the match so they have a Score association
+        score: { ... (p.Score ?? defaultScoreResponse) } // But new players from the player list don't! Set one!
       })
     ) ?? [];
+    selectedPlayers.value = Array.from({...struct, length: 4});
   })
 
   // Initialize and clean up values on hide/show
@@ -55,55 +57,65 @@
   })
 
   function setDefaults() {
-      // Setup split time values
-      editedMatch.value = clone(props.match);
-      dateModel.value = editedMatch.value.date;
-      timeModel.value = extractTime(editedMatch.value.date);
-
-      // Reset player edit section
-      selectedPlayers.value = [];
-
-      // Fill out existing players, if any
-      //playerSlots.value = [... editedMatch.value.players ?? []];
-      playerPanelOpen.value = editedMatch.value.players.length ? `players` : ``
+    // Setup split time values
+    editedMatch.value = clone(props.match);
+    dateModel.value = editedMatch.value.date;
+    timeModel.value = extractTime(editedMatch.value.date);
+    selectedPlayers.value = [];
+    playerPanelOpen.value = editedMatch.value.players.length ? `players` : ``
   }
 
   function clear() {
     editedMatch.value = defaultMatchResponse;
     dateModel.value = new Date();
     timeModel.value = {hours: 0, minutes: 0, seconds: 0};
-
-    // Reset player edit section
     selectedPlayers.value = [];
   }
 
-  function toChangedValues(...players: PlayerResponse[]) {
-    return players.map(p => (
+  function toChangedValues(p: PlayerResponse) {
+    return (
       { player_id: p.player_id,
         points: p.Score?.points,
         outcome: p.Score?.outcome
-      })
-    );
+      }
+    )
+  }
+
+  function extractCompareValues(match: MatchResponse) {
+    const { players, scores, Score, ...compare } = toRaw(match);
+    return { players, scores, Score, compare };
   }
 
   // Determine what, if any properties have changed and emit a request to update data.
   const submit = () => {
     editedMatch.value.date = editedDateTime.value;
 
-    const finalPlayers = new Map<string, PlayerResponse>(selectedPlayers.value.map(p => (
-      [ p.player.player_id, { ...toRaw(p.player), Score: toRaw(p.score) } ]
-      ))); // We use toRaw here because we want to perform a comparison and diff doesn't understand reactive proxies
+    // Get rid of the values we don't want to compare
+    const {players: oPlayers, compare: oMatch} = extractCompareValues(props.match)
+    const {players: ePlayers, compare: eMatch} = extractCompareValues(editedMatch.value)
+    oMatch.date = dateUtil.date(oMatch.date); // Fix date-as-string from backend breaking comparisons
+
+
+    const originalPlayers = oPlayers.map(p => toChangedValues(toRaw(p)));
+    const finalPlayers = new Map<string, MatchPlayerUpdateValue>(selectedPlayers.value
+      .filter((p): p is PlayerAndScore => p != undefined)
+      .map(p => ({ ...toRaw(p.player), Score: toRaw(p.score) }) )
+      .map(p => toChangedValues(p))
+      .map(p => ( [ p.player_id, p ] ))
+      // We use toRaw here because we want to perform a comparison and diff doesn't understand reactive proxies
+      );
 
     const removedPlayers: string[] = [];
-    const addedPlayers: NonNullable<MatchUpdateRequest["players"]>["set"] = [];
+    const addedPlayers: MatchPlayerUpdateValue[] = [];
+    const updatedPlayers: MatchPlayerUpdateValue[] = [];
     // Find players in the original list NOT in the final one
-    toRaw(editedMatch.value.players).forEach(original => {
+    originalPlayers.forEach(original => {
       const final = finalPlayers.get(original.player_id);
       if (final) {
         // If an element is present in both lists
         if (!isEmpty(diff(original, final))) { // And it's modified
-          console.log(`Adding to addedPlayers: ${original.player_id}`)
-          addedPlayers.push(...toChangedValues(final)); // Add it to the added list
+          console.log(`Adding to updatedPlayers: ${original.player_id}`)
+          updatedPlayers.push(final); // Add it to the added list
         } // In either case, remove from finalPlayers since it's been counted
         finalPlayers.delete(original.player_id);
       } else { // If it's not in the final list, remove it
@@ -113,32 +125,23 @@
     });
     // The remaining keys in finalPlayers are values we haven't counted
     // They belong to the final list but not the original
-    const changed = toChangedValues(...Array.from(finalPlayers.values()));
+    const changed = Array.from(finalPlayers.values());
     changed.length ? console.log(`Adding remaining to addedPlayers: ${changed.map(val => val.player_id).join(", ")}`) : null;
     addedPlayers.push(...changed);
 
-    const changedValues = diff(props.match, editedMatch.value) as Partial<MatchResponse>;
-
-    if (Object.hasOwn(changedValues, "date")) {
-      // Dumb hack to remove date comparisons failing
-      // The original is actually text because it's from a database so we use dateFns
-      if (dateUtil.isEqual(changedValues.date, props.match.date)) {
-        delete changedValues.date;
-      }
-    }
+    const changedValues = diff(oMatch, eMatch) as Partial<MatchResponse>;
 
     const request: MatchUpdateRequest = {
       match_id: props.match.match_id,
       match: changedValues,
-      ...( // Only set players if one of the lists has values
-        (addedPlayers.length || removedPlayers.length) &&
-        {
-          players:  {
-            set: addedPlayers,
-            remove: removedPlayers
-          }
-        }
-      )
+    }
+
+    if (addedPlayers.length || removedPlayers.length || updatedPlayers.length) {
+      request.players = {
+        add: addedPlayers,
+        update: updatedPlayers,
+        remove: removedPlayers
+      }
     }
 
     if (!isEmpty(request.match) || request.players ) {
@@ -287,11 +290,11 @@
               <v-row>
                 <v-col
                   cols="6"
-                  v-for="{player, score} in selectedPlayers"
-                  :key="player.player_id"
-                  :id="`player-${player.player_id}`">
+                  v-for="selected, index in selectedPlayers"
+                  :key="`${selected?.player.player_id}-${index}`"
+                  :id="`player-${selected?.player.player_id}-${index}`">
                   <v-card
-                    v-if="player"
+                    v-if="selected != undefined"
                     variant="elevated"
                     color="light-blue-darken-4"
                     elevation="8"
@@ -299,18 +302,22 @@
                     <v-row>
                       <v-col cols="8" align-self="center">
                         <v-label class="mx-2 font-weight-bold">
-                          {{ player?.twitch_name }}
+                          {{ selected.player.twitch_name }}
                         </v-label>
                         <v-chip
-                          v-if="player?.pronouns"
-                          :text="player?.pronouns"
+                          v-if="selected.player.pronouns"
+                          :text="selected.player.pronouns"
                           size="small"
                           variant="flat"
                           color="white" />
                       </v-col>
                       <v-col>
                         <!-- This field should change if the match type / outcome is not a score type -->
-                        <v-text-field v-model="score.points" hide-details variant="outlined" label="Score">
+                        <v-text-field
+                          v-model="selected.score.points"
+                          hide-details
+                          variant="outlined"
+                          label="Score">
                           <template #append-inner>
                             <div class="d-flex flex-column justify-center">
                               <v-icon
@@ -319,14 +326,14 @@
                                 role="button"
                                 aria-label="Increase Score"
                                 class="icon-hover"
-                                @click="score.points++" />
+                                @click="selected.score.points++" />
                               <v-icon
                                 icon="fas fa-chevron-down"
                                 size="tiny"
                                 role="button"
                                 aria-label="Decrease Score"
                                 class="icon-hover"
-                                @click="score.points--" />
+                                @click="selected.score.points--" />
                             </div>
                           </template>
                         </v-text-field>

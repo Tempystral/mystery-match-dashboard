@@ -76,11 +76,13 @@ const defaultMatchResponse: MatchResponse = {
   scores: [],
 };
 
+type MatchPlayerUpdateValue = { player_id: string; points?: number; outcome?: Outcome };
 type MatchUpdateRequest = {
   match_id: string;
   match: Partial<Omit<MatchResponse, "match_id" | "players" | "scores">>;
   players?: {
-    set: { player_id: string; points?: number; outcome?: Outcome }[];
+    add: MatchPlayerUpdateValue[];
+    update: MatchPlayerUpdateValue[];
     remove: string[];
   };
 };
@@ -100,5 +102,11 @@ const defaultScoreResponse: ScoreResponse = {
 };
 
 export { PlayerResponse, PlayerResponseGroup, PlayerUpdateRequest, defaultPlayer };
-export { MatchResponse, MatchResponseGroup, MatchUpdateRequest, defaultMatchResponse };
+export {
+  MatchResponse,
+  MatchResponseGroup,
+  MatchUpdateRequest,
+  MatchPlayerUpdateValue,
+  defaultMatchResponse,
+};
 export { ScoreResponse, defaultScoreResponse };
