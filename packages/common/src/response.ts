@@ -78,7 +78,11 @@ const defaultMatchResponse: MatchResponse = {
 
 type MatchUpdateRequest = {
   match_id: string;
-  match: Partial<Omit<MatchResponse, "match_id">>;
+  match: Partial<Omit<MatchResponse, "match_id" | "players" | "scores">>;
+  players?: {
+    set: { player_id: string; points?: number; outcome?: Outcome }[];
+    remove: string[];
+  };
 };
 
 type ScoreResponse = {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { diff } from "deep-object-diff";
   import { clone, isEmpty } from "lodash-es";
-  import { ref, watch, watchEffect, computed } from 'vue';
+  import { ref, toRaw, watch, computed } from 'vue';
   import { MatchResponse, MatchUpdateRequest, defaultMatchResponse, RoundLabel, PlayerResponse, ScoreResponse, defaultScoreResponse } from "@mmd/common"
   import DateFnsAdapter from "@date-io/date-fns";
   import VueDatePicker from "@vuepic/vue-datepicker";
@@ -37,9 +37,21 @@
   const selectedPlayers = ref<{player: PlayerResponse, score: ScoreResponse}[]>([]);
   const maxAllowedPlayers = computed(() => editedMatch.value.round.match(/GROUP|TIE|UNKNOWN/) ? 4 : 2);
 
+  watch(playerSlots, newPlayers => {
+    while (playerSlots.value.length > maxAllowedPlayers.value) {
+      playerSlots.value.pop(); // Reduce allowed amount to 4
+    }
+    selectedPlayers.value = newPlayers.map(p => (
+      {
+        player: p,
+        score: { ... (p.Score ?? defaultScoreResponse) }
+      })
+    )
+  })
+
   // Initialize and clean up values on hide/show
-  watchEffect(() => {
-    showDialog.value ? setDefaults() : clear();
+  watch(showDialog, (isShowing) => {
+    isShowing ? setDefaults() : clear();
   })
 
   function setDefaults() {
@@ -53,7 +65,7 @@
       selectedPlayers.value = [];
 
       // Fill out existing players, if any
-      playerSlots.value = editedMatch.value.players ?? [];
+      playerSlots.value = [... editedMatch.value.players ?? []];
       playerPanelOpen.value = playerSlots.value.length ? `players` : ``
   }
 
@@ -65,31 +77,74 @@
     // Reset player edit section
     playerSlots.value = [];
     selectedPlayers.value = [];
+  }
 
+  function toChangedValues(...players: PlayerResponse[]) {
+    return players.map(p => (
+      { player_id: p.player_id,
+        points: p.Score?.points,
+        outcome: p.Score?.outcome
+      })
+    );
   }
 
   // Determine what, if any properties have changed and emit a request to update data.
   const submit = () => {
     editedMatch.value.date = editedDateTime.value;
-    const changedValues = diff(props.match, editedMatch.value);
-    if (!isEmpty(changedValues)) {
-      console.log(changedValues);
-      emit("updateMatch", {match_id: props.match.match_id, match: changedValues});
+
+    const finalPlayers = new Map<string, PlayerResponse>(selectedPlayers.value.map(p => [p.player.player_id, {...toRaw(p.player), Score: toRaw(p.score)}] ));
+
+    const removedPlayers: string[] = [];
+    const addedPlayers: NonNullable<MatchUpdateRequest["players"]>["set"] = [];
+    // Find players in the original list NOT in the final one
+    toRaw(editedMatch.value.players)?.forEach(player => {
+      const fp = finalPlayers.get(player.player_id);
+      if (fp) {
+        // If an element is present in both lists
+        if (!isEmpty(diff(player, fp))) { // And it's modified
+          console.log(`Adding to addedPlayers: ${player.player_id}`)
+          addedPlayers.push(...toChangedValues(fp)); // Add it to the added list
+        } // In either case, remove from finalPlayers since it's been counted
+        finalPlayers.delete(player.player_id);
+      } else { // If it's not in the final list, remove it
+        console.log(`Adding to removedPlayers: ${player.player_id}`)
+        removedPlayers.push(player.player_id);
+      }
+    });
+    // The remaining keys in finalPlayers are values we haven't counted
+    // They belong to the final list but not the original
+    const changed = toChangedValues(...Array.from(finalPlayers.values()));
+    console.log(`Adding remaining to addedPlayers: ${changed.map(val => val.player_id).join(", ")}`)
+    addedPlayers.push(...changed);
+
+    const changedValues = diff(props.match, editedMatch.value) as Partial<MatchResponse>;
+    // Dumb hack to remove date comparisons failing
+    if (Object.hasOwn(changedValues, "date")) {
+      if (changedValues.date == editedMatch.value.date) {
+        delete changedValues.date;
+      }
+    }
+
+    const request: MatchUpdateRequest = {
+      match_id: props.match.match_id,
+      match: changedValues,
+      ...( // Only set players if one of the lists has values
+        (addedPlayers.length || removedPlayers.length) &&
+        {
+          players:  {
+            set: addedPlayers,
+            remove: removedPlayers
+          }
+        }
+      )
+    }
+
+    if (!isEmpty(request.match) || request.players ) {
+      console.log(request);
+      //emit("updateMatch", {match_id: props.match.match_id, match: changedValues});
     }
     closeDialog();
   }
-
-  watch(playerSlots, newPlayers => {
-    while (playerSlots.value.length > maxAllowedPlayers.value) {
-      playerSlots.value.pop(); // Reduce allowed amount to 4
-    }
-    selectedPlayers.value = newPlayers.map(p => (
-      {
-        player: p,
-        score: { ... (p.Score ?? defaultScoreResponse) }
-      })
-    )
-  })
 </script>
 <template>
   <v-dialog max-width="800px" v-model="showDialog">
