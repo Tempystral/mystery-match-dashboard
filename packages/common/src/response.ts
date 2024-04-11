@@ -80,7 +80,7 @@ type MatchPlayerUpdateValue = { player_id: string; points?: number; outcome?: Ou
 type MatchUpdateRequest = {
   match_id: string;
   match: Partial<Omit<MatchResponse, "match_id" | "players" | "scores">>;
-  players?: {
+  players: {
     add: MatchPlayerUpdateValue[];
     update: MatchPlayerUpdateValue[];
     remove: string[];

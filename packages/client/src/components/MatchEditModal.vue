@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { diff } from "deep-object-diff";
+  import { detailedDiff, diff } from "deep-object-diff";
   import { clone, isEmpty } from "lodash-es";
   import { ref, toRaw, watch, computed } from 'vue';
   import { MatchResponse, MatchUpdateRequest, MatchPlayerUpdateValue, defaultMatchResponse, RoundLabel, PlayerResponse, ScoreResponse, defaultScoreResponse } from "@mmd/common"
@@ -27,16 +27,16 @@
 
   /* Match values */
   const editedMatch = ref<MatchResponse>(defaultMatchResponse);
-  const { dateUtil, dateModel, timeModel, editedDateTime } = useDateTime<DateFnsAdapter>();
 
+  const { dateUtil, dateModel, timeModel, editedDateTime } = useDateTime<DateFnsAdapter>();
   const rounds = Object.entries(RoundLabel).map(e => {return {title: e[1], value: e[0]}});
   const maxAllowedPlayers = computed(() => editedMatch.value.round.match(/GROUP|TIE|UNKNOWN/) ? 4 : 2);
 
   /* Player values */
-  const playerPanelOpen = ref("");
-  /** Pads the model to 4 slots */
   interface PlayerAndScore {player: PlayerResponse, score: ScoreResponse}
-  const selectedPlayers = ref<(PlayerAndScore | undefined)[]>(Array(maxAllowedPlayers.value).fill(undefined));
+  const selectedPlayers = ref<(PlayerAndScore | undefined)[]>([]);
+  const playerPanelOpen = ref("");
+
 
   watch(() => editedMatch.value.players, newPlayers => {
     while (editedMatch.value.players.length > maxAllowedPlayers.value) {
@@ -61,7 +61,7 @@
     editedMatch.value = clone(props.match);
     dateModel.value = editedMatch.value.date;
     timeModel.value = extractTime(editedMatch.value.date);
-    selectedPlayers.value = [];
+    selectedPlayers.value = Array(maxAllowedPlayers.value).fill(undefined);
     playerPanelOpen.value = editedMatch.value.players.length ? `players` : ``
   }
 
@@ -72,13 +72,12 @@
     selectedPlayers.value = [];
   }
 
-  function toChangedValues(p: PlayerResponse) {
-    return (
-      { player_id: p.player_id,
-        points: p.Score?.points,
-        outcome: p.Score?.outcome
-      }
-    )
+  function toChangedValues(p: PlayerResponse): MatchPlayerUpdateValue {
+    return {
+      player_id: p.player_id,
+      points: p.Score?.points,
+      outcome: p.Score?.outcome
+    }
   }
 
   function extractCompareValues(match: MatchResponse) {
@@ -87,66 +86,50 @@
   }
 
   // Determine what, if any properties have changed and emit a request to update data.
-  const submit = () => {
-    editedMatch.value.date = editedDateTime.value;
-
+  function submit() {
     // Get rid of the values we don't want to compare
-    const {players: oPlayers, compare: oMatch} = extractCompareValues(props.match)
-    const {players: ePlayers, compare: eMatch} = extractCompareValues(editedMatch.value)
-    oMatch.date = dateUtil.date(oMatch.date); // Fix date-as-string from backend breaking comparisons
+    const { compare: eMatch } = extractCompareValues(editedMatch.value)
+    const { players: oPlayers, compare: oMatch } = extractCompareValues(props.match)
+    // Fix date-as-string from backend breaking comparisons
+    oMatch.date = dateUtil.date(oMatch.date);
+    eMatch.date = dateUtil.date(editedDateTime.value);
 
+    // Compare match data
+    const request: MatchUpdateRequest = {
+      match_id: props.match.match_id,
+      match: diff(oMatch, eMatch) as Partial<MatchResponse>,
+      players: {
+        add: [],
+        update: [],
+        remove: []
+      }
+    }
 
+    // Build lists of minimal player information for comparison
     const originalPlayers = oPlayers.map(p => toChangedValues(toRaw(p)));
     const finalPlayers = new Map<string, MatchPlayerUpdateValue>(selectedPlayers.value
       .filter((p): p is PlayerAndScore => p != undefined)
-      .map(p => ({ ...toRaw(p.player), Score: toRaw(p.score) }) )
-      .map(p => toChangedValues(p))
-      .map(p => ( [ p.player_id, p ] ))
-      // We use toRaw here because we want to perform a comparison and diff doesn't understand reactive proxies
-      );
+      .map(p => ({ ...toRaw(p.player), Score: toRaw(p.score) }) ) // deep-equals doesn't understand reactive proxies
+      .map(p => ( [ p.player_id, toChangedValues(p) ] ))
+    );
 
-    const removedPlayers: string[] = [];
-    const addedPlayers: MatchPlayerUpdateValue[] = [];
-    const updatedPlayers: MatchPlayerUpdateValue[] = [];
     // Find players in the original list NOT in the final one
     originalPlayers.forEach(original => {
       const final = finalPlayers.get(original.player_id);
-      if (final) {
-        // If an element is present in both lists
+      if (final) { // If an element is present in both lists
         if (!isEmpty(diff(original, final))) { // And it's modified
-          console.log(`Adding to updatedPlayers: ${original.player_id}`)
-          updatedPlayers.push(final); // Add it to the added list
+          request.players.update.push(final); // Add it to the added list
         } // In either case, remove from finalPlayers since it's been counted
         finalPlayers.delete(original.player_id);
       } else { // If it's not in the final list, remove it
-        console.log(`Adding to removedPlayers: ${original.player_id}`)
-        removedPlayers.push(original.player_id);
+        request.players.remove.push(original.player_id);
       }
-    });
-    // The remaining keys in finalPlayers are values we haven't counted
-    // They belong to the final list but not the original
-    const changed = Array.from(finalPlayers.values());
-    changed.length ? console.log(`Adding remaining to addedPlayers: ${changed.map(val => val.player_id).join(", ")}`) : null;
-    addedPlayers.push(...changed);
-
-    const changedValues = diff(oMatch, eMatch) as Partial<MatchResponse>;
-
-    const request: MatchUpdateRequest = {
-      match_id: props.match.match_id,
-      match: changedValues,
-    }
-
-    if (addedPlayers.length || removedPlayers.length || updatedPlayers.length) {
-      request.players = {
-        add: addedPlayers,
-        update: updatedPlayers,
-        remove: removedPlayers
-      }
-    }
+    }); // Any values not counted are in the final list but not the original
+    request.players.add.push(...Array.from(finalPlayers.values()));
 
     if (!isEmpty(request.match) || request.players ) {
-      console.log(request);
-      //emit("updateMatch", {match_id: props.match.match_id, match: changedValues});
+      //console.log(request);
+      emit("updateMatch", request);
     }
     closeDialog();
   }
