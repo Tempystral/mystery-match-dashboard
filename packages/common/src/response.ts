@@ -21,11 +21,6 @@ type PlayerResponse = {
   total_score: number;
 };
 
-type PlayerUpdateRequest = {
-  player_id: string;
-  player: Partial<Omit<PlayerResponse, "player_id">>;
-};
-
 const defaultPlayer: PlayerResponse = {
   player_id: "",
   twitch_name: "",
@@ -76,17 +71,6 @@ const defaultMatchResponse: MatchResponse = {
   scores: [],
 };
 
-type MatchPlayerUpdateValue = { player_id: string; points?: number; outcome?: Outcome };
-type MatchUpdateRequest = {
-  match_id: string;
-  match: Partial<Omit<MatchResponse, "match_id" | "players" | "scores">>;
-  players: {
-    add: MatchPlayerUpdateValue[];
-    update: MatchPlayerUpdateValue[];
-    remove: string[];
-  };
-};
-
 type ScoreResponse = {
   score_id: string;
   player_id: string;
@@ -101,12 +85,6 @@ const defaultScoreResponse: ScoreResponse = {
   outcome: Outcome.SCORE,
 };
 
-export { PlayerResponse, PlayerResponseGroup, PlayerUpdateRequest, defaultPlayer };
-export {
-  MatchResponse,
-  MatchResponseGroup,
-  MatchUpdateRequest,
-  MatchPlayerUpdateValue,
-  defaultMatchResponse,
-};
+export { PlayerResponse, PlayerResponseGroup, defaultPlayer };
+export { MatchResponse, MatchResponseGroup, defaultMatchResponse };
 export { ScoreResponse, defaultScoreResponse };

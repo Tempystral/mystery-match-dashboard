@@ -4,6 +4,7 @@ import { body } from "express-validator";
 import { Match } from "../../data/models.js";
 import * as database from "../services/dbService.js";
 import sheets from "../services/sheetsService.js";
+import { MatchUpdateRequest } from "@mmd/common";
 
 const router = express.Router();
 
@@ -37,8 +38,10 @@ router.post("/", body().isObject(), async (req, res, next) => {
  *   }
  */
 router.patch("/", body("value.match_id").exists({ values: "falsy" }).isUUID(), async (req, res, next) => {
-  const { match_id, match }: { match_id: string; match: UpdateValues<Match> } = req.body;
-  const result = await database.updateMatch(match_id, match);
+  const { match_id, match, players }: MatchUpdateRequest = req.body;
+  await database.updateMatch(match_id, match);
+  const result = await database.changeMatchPlayers(match_id, players.add, players.update, players.remove);
+  // Could do with real error handling here
   if (!result) {
     return res.status(500).send(`Could not update match with id ${match_id}`);
   }

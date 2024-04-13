@@ -1,5 +1,6 @@
 import { CreationAttributes, Op, UpdateValues } from "@sequelize/core";
 import { Match, Player } from "../../data/models.js";
+import { MatchPlayerUpdateValue } from "@mmd/common";
 
 const partialMatchInclude = (id: string) => {
   return {
@@ -148,11 +149,17 @@ export async function removePlayersFromMatch(match_id: string, player_ids: strin
 
 export async function changeMatchPlayers(
   match_id: string,
-  playersToAdd: string[],
+  playersToAdd: MatchPlayerUpdateValue[],
+  playersToUpdate: MatchPlayerUpdateValue[],
   playersToRemove: string[],
 ) {
   const match = await Match.findByPk(match_id, { include: [Player] });
-  await match?.removePlayers(playersToRemove);
-  await match?.addPlayers(playersToAdd);
+  await match?.removePlayers([...playersToRemove, ...playersToUpdate.map((p) => p.player_id)]);
+  Promise.allSettled(
+    [...playersToAdd, ...playersToUpdate].map((p) => {
+      match?.addPlayers(p.player_id, { through: { points: p.points ?? 0, outcome: p.outcome ?? 0 } });
+    }),
+    // It is exceedingly stupid that his library won't let me update a damn junction table easily
+  );
   return await match?.reload();
 }

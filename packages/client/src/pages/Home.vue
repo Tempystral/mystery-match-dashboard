@@ -1,7 +1,7 @@
 <script setup lang="ts">
-  import { api } from '@client/util/request.js';
+  import { api } from '@client/util/httpService.js';
   import { useQuery } from '@tanstack/vue-query';
-  import { MatchResponse, PlayerResponse } from "@mmd/common"
+  import { MatchResponse } from "@mmd/common"
   import UpcomingMatchCard from '../components/cards/UpcomingMatchCard.vue';
 
   const { isLoading: matchesLoading, data: matches, } = useQuery({
