@@ -3,15 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
+  "type": "module",
   "workspaces": {
     "packages": [
       "./packages/*"
     ]
   },
   "scripts": {
-    "client": "npm --workspace=@mmd/client run",
-    "server": "npm --workspace=@mmd/server run",
-    "common": "npm --workspace=@mmd/common run",
-    "clean": "npm run client clean && npm run server clean && npm run common clean"
+    "client": "pnpm --filter=@mmd/client run",
+    "server": "pnpm --filter=@mmd/server run",
+    "common": "pnpm --filter=@mmd/common run",
+    "clean-all": "pnpm run -r clean",
+    "build-all": "pnpm run common build; pnpm --filter=@mmd/server --filter=@mmd/client run build"
   }
 }

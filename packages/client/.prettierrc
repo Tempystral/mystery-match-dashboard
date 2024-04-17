@@ -1,5 +1,5 @@
 printWidth: 110
 bracketSameLine: true
 htmlWhitespaceSensitivity: "strict"
-vueIndentScriptAndStyle: true
+vueIndentScriptAndStyle: false
 embeddedLanguageFormatting: "off"
