@@ -1,25 +1,26 @@
-import { Outcome } from "./types.js";
-import { PlayerStatus, Round } from "./types.js";
+import { Outcome } from "./enums.js";
+import { PlayerStatus, Round } from "./enums.js";
 
-type PlayerResponse = {
+interface PlayerDetails {
   player_id: string;
   twitch_name: string;
-  twitch_alt?: string;
+  twitch_alt: string | null;
   discord_name: string;
-  twitter_name?: string;
+  twitter_name: string | null;
   in_brackets: boolean;
   status: PlayerStatus;
-  pronunciation_notes: string;
-  pronouns: string;
-  accessibility: string;
-  timezone: string;
-  availability: string;
-  notes: string;
-  matches: Partial<MatchResponse>[];
-  Match?: Partial<MatchResponse>;
-  Score?: ScoreResponse;
-  total_score: number;
-};
+  pronouns: string | null;
+}
+
+interface PlayerPersonalDetails {
+  pronunciation_notes: string | null;
+  accessibility: string | null;
+  timezone: string | null;
+  availability: string | null;
+  notes: string | null;
+}
+
+type PlayerResponse = PlayerDetails & PlayerPersonalDetails;
 
 const defaultPlayer: PlayerResponse = {
   player_id: "",
@@ -35,23 +36,18 @@ const defaultPlayer: PlayerResponse = {
   timezone: "",
   availability: "",
   notes: "",
-  matches: [],
-  total_score: 0,
 };
 
 type MatchResponse = {
   match_id: string;
   tournament: string;
   date: Date;
-  game: string;
-  platform: string;
-  gamemaster: string;
+  game: string | null;
+  platform: string | null;
+  gamemaster: string | null;
   round: Round;
   length: number;
-  vod: string;
-  players: PlayerResponse[]; // This field is marked as optional in models.ts but an empty list does actually get created when there's no data
-  scores?: ScoreResponse[];
-  Score?: ScoreResponse;
+  vod: string | null;
 };
 
 type MatchResponseGroup = Record<string, MatchResponse>;
@@ -67,8 +63,6 @@ const defaultMatchResponse: MatchResponse = {
   round: Round.UNKNOWN,
   length: 1,
   vod: "",
-  players: [],
-  scores: [],
 };
 
 type ScoreResponse = {
@@ -85,6 +79,6 @@ const defaultScoreResponse: ScoreResponse = {
   outcome: Outcome.SCORE,
 };
 
-export { PlayerResponse, PlayerResponseGroup, defaultPlayer };
+export { PlayerDetails, PlayerPersonalDetails, PlayerResponse, PlayerResponseGroup, defaultPlayer };
 export { MatchResponse, MatchResponseGroup, defaultMatchResponse };
 export { ScoreResponse, defaultScoreResponse };
