@@ -1,51 +1,51 @@
 <script setup lang="ts">
-  import { useQuery } from '@tanstack/vue-query';
-  import { MatchResponse, PlayerResponse, RoundLabel, defaultMatchResponse, Round } from "@mmd/common"
-  import DateFnsAdapter from "@date-io/date-fns";
-  import { useDate } from 'vuetify';
-  import { api } from '@client/util/httpService';
-  import { ref } from 'vue';
-  import { useMutateMatch } from '@client/composables/mutations';
-  import MatchEditModal from '@client/components/MatchEditModal.vue';
+import { useQuery } from '@tanstack/vue-query';
+import { MatchResponse, PlayerResponse, RoundLabel, defaultMatchResponse, Round } from "@mmd/common"
+import DateFnsAdapter from "@date-io/date-fns";
+import { useDate } from 'vuetify';
+import { api } from '@client/util/httpService';
+import { ref } from 'vue';
+import { useMutateMatch } from '@client/composables/mutations';
+import MatchEditModal from '@client/components/MatchEditModal.vue';
 
-  const { isPending, data: matches, isRefetching } = useQuery({
-    queryKey: ["matches"],
-    queryFn: () => api.get<MatchResponse[]>("/matches", {})
-  });
+const { isPending, data: matches, isRefetching } = useQuery({
+  queryKey: ["matches"],
+  queryFn: () => api.get<MatchResponse[]>("/matches", {})
+});
 
-  const { error: mutError, mutate, reset } = useMutateMatch();
+const { error: mutError, mutate, reset } = useMutateMatch();
 
-  const { data: playerData, error: playerError, isLoading: playerLoading } = useQuery({
-    queryKey: ["players"],
-    queryFn: () => api.get<PlayerResponse[]>("/players/partial", {})
-  });
+const { data: playerData, error: playerError, isLoading: playerLoading } = useQuery({
+  queryKey: ["players", "partial"],
+  queryFn: () => api.get<PlayerResponse[]>("/players/partial", {})
+});
 
-  const showDialog = ref(false);
-  const editIndex = ref(-1);
-  const editedItem = ref<MatchResponse>(defaultMatchResponse as MatchResponse);
+const showDialog = ref(false);
+const editIndex = ref(-1);
+const editedItem = ref<MatchResponse>(defaultMatchResponse as MatchResponse);
 
-  const editMatch = (match: MatchResponse) => {
-    if (matches.value != undefined) {
-    editIndex.value = matches.value.indexOf(match) ?? -1;
-    editedItem.value = Object.assign({}, match);
-    showDialog.value = true;
-    }
+const editMatch = (match: MatchResponse) => {
+  if (matches.value != undefined) {
+  editIndex.value = matches.value.indexOf(match) ?? -1;
+  editedItem.value = Object.assign({}, match);
+  showDialog.value = true;
   }
+}
 
-  const dateUtil = useDate() as DateFnsAdapter;
-  const formatDate = (item: MatchResponse) => dateUtil.format(item.date, "fullDate");
+const dateUtil = useDate() as DateFnsAdapter;
+const formatDate = (item: MatchResponse) => dateUtil.format(item.date, "fullDate");
 
-  const deleteMatch = (match: MatchResponse) => { }
+const deleteMatch = (match: MatchResponse) => { }
 
-  const headers = ref([
-    { key: "date", title: "Date", value: formatDate },
-    { key: "game", title: "Game Name" },
-    { key: "platform", title: "Platform" },
-    { key: "gamemaster", title: "Gamemaster" },
-    { key: "round", title: "Round", value: (item: MatchResponse) => RoundLabel[item.round ?? Round.UNKNOWN]},
-    { key: "vod", title: "VOD Link" },
-    { key: "actions", title: "Actions", sortable: false },
-  ]);
+const headers = ref([
+  { key: "date", title: "Date", value: formatDate },
+  { key: "game", title: "Game Name" },
+  { key: "platform", title: "Platform" },
+  { key: "gamemaster", title: "Gamemaster" },
+  { key: "round", title: "Round", value: (item: MatchResponse) => RoundLabel[item.round ?? Round.UNKNOWN]},
+  { key: "vod", title: "VOD Link" },
+  { key: "actions", title: "Actions", sortable: false },
+]);
 </script>
 <template>
   <v-container class="bg-surface-accent">

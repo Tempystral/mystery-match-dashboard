@@ -2,20 +2,20 @@ import { CreationAttributes, Op, UpdateValues } from "@sequelize/core";
 import { Match, Player } from "../../data/models.js";
 import { MatchPlayerUpdateValue } from "@mmd/common";
 
-const partialMatchInclude = (id: string) => {
+function partialMatchInclude(id: string) {
   return {
     include: [
       {
         association: "matches",
         attributes: ["match_id", "game", "gamemaster", "round"],
         through: {
-          attributes: ["points"],
+          attributes: ["points", "outcome"],
         },
       },
       { association: "score", where: { "$score.player_id$": id } },
     ],
   };
-};
+}
 
 const partialPlayerInclude = {
   include: [
@@ -34,7 +34,7 @@ const partialPlayerInclude = {
         attributes: ["points", "outcome"],
       },
     },
-    //{ association: "scores", attributes: ["score_id", "player_id", "points", "outcome"] },
+    // { association: "scores", attributes: ["score_id", "player_id", "points", "outcome"] },
   ],
 };
 
@@ -50,7 +50,9 @@ interface MultiGetOptions {
 }
 
 export async function getPlayer({ id, extras = false }: SingleGetOptions) {
-  return await Player.findByPk(id, includeIf(partialMatchInclude(id), extras));
+  return await Player.findByPk(id, {
+    ...includeIf(partialMatchInclude(id), extras),
+  });
 }
 
 export async function getPlayers({ ids, extras = false }: MultiGetOptions) {
