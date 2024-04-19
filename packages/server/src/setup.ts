@@ -7,6 +7,9 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import router from "./api/router.js";
+import { PGlite } from "@electric-sql/pglite";
+import { drizzle } from "drizzle-orm/pglite";
+import * as schema from "./data/schema.js";
 
 function setup_web() {
   const app = express();
@@ -25,20 +28,9 @@ function setup_web() {
 }
 
 async function setup_database() {
-  const sq = new Sequelize({
-    database: "database",
-    username: "user",
-    password: "password",
-    dialect: "sqlite",
-    logging: false,
-    storage: "database.sqlite",
-    models: [Player, Match, Score],
-  });
-
-  await Match.sync();
-  await Player.sync();
-  await Score.sync();
-  return sq;
+  const client = new PGlite("./database");
+  const db = drizzle(client, { schema });
+  return db;
 }
 
 async function setup_bot() {
