@@ -234,7 +234,7 @@ export class Score extends Model<InferAttributes<Score>, InferCreationAttributes
 
   @Attribute(DataTypes.STRING)
   @AllowNull
-  declare outcome: typeof Outcome;
+  declare outcome: Outcome;
 
   declare getMatch: BelongsToGetAssociationMixin<Match>;
   declare getPlayer: BelongsToGetAssociationMixin<Player>;

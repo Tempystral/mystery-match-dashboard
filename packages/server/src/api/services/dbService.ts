@@ -1,13 +1,15 @@
-import { CreationAttributes, Op, UpdateValues } from "@sequelize/core";
+import { CreationAttributes, DatabaseError, Op, UpdateValues } from "@sequelize/core";
 import { Match, Player } from "../../data/models.js";
-import { MatchPlayerUpdateValue } from "@mmd/common";
+import { MatchPlayerUpdateValue, Outcome } from "@mmd/common";
+import { database } from "../../setup.js";
+import { Score } from "../../data/models.js";
 
 function partialMatchInclude(id: string) {
   return {
     include: [
       {
         association: "matches",
-        attributes: ["match_id", "game", "gamemaster", "round"],
+        //attributes: ["match_id", "game", "gamemaster", "round"],
         through: {
           attributes: ["points", "outcome"],
         },
@@ -58,7 +60,16 @@ export async function getPlayer({ id, extras = false }: SingleGetOptions) {
 export async function getPlayers({ ids, extras = false }: MultiGetOptions) {
   return await Player.findAll({
     where: ids ? { player_id: { [Op.in]: ids } } : {},
-    ...includeIf(partialMatchInclude, extras),
+    include: [
+      {
+        association: "matches",
+        //attributes: ["match_id", "game", "gamemaster", "round"],
+        through: {
+          attributes: ["points", "outcome"],
+        },
+      },
+      { association: "score" },
+    ],
   });
 }
 
@@ -155,13 +166,30 @@ export async function changeMatchPlayers(
   playersToUpdate: MatchPlayerUpdateValue[],
   playersToRemove: string[],
 ) {
-  const match = await Match.findByPk(match_id, { include: [Player] });
-  await match?.removePlayers([...playersToRemove, ...playersToUpdate.map((p) => p.player_id)]);
-  Promise.allSettled(
-    [...playersToAdd, ...playersToUpdate].map((p) => {
-      match?.addPlayers(p.player_id, { through: { points: p.points ?? 0, outcome: p.outcome ?? 0 } });
-    }),
-    // It is exceedingly stupid that his library won't let me update a damn junction table easily
-  );
-  return await match?.reload();
+  try {
+    const result = await database.transaction(async () => {
+      const match = await Match.findByPk(match_id, { include: [Player], rejectOnEmpty: true });
+      if (match) {
+        await match.removePlayers(playersToRemove);
+        playersToAdd.forEach(async (p) => {
+          await match.addPlayer(p.player_id, {
+            through: { points: p.points ?? 0, outcome: p.outcome ?? Outcome.SCORE },
+          });
+        });
+        playersToUpdate.forEach(async (p) => {
+          await Score.update(
+            { points: `${p.points ?? 0}`, outcome: p.outcome ?? Outcome.SCORE },
+            { where: { player_id: p.player_id } },
+          );
+        });
+        // It is exceedingly stupid that his library won't let me update a damn junction table easily
+        return await match.reload();
+      }
+      return null;
+    });
+    return result;
+  } catch (error) {
+    console.log((error as DatabaseError).message);
+    throw error as DatabaseError;
+  }
 }
