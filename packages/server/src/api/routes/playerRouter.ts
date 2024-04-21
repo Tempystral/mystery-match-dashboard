@@ -1,7 +1,7 @@
-import express from "express";
-import { body } from "express-validator";
-import sheets from "../services/sheetsService.js";
+import { MatchId, PlayerSearchParams, QueryParamError } from "@mmd/common";
+import express, { Request } from "express";
 import database from "../services/database.js";
+import sheets from "../services/sheetsService.js";
 
 const router = express.Router();
 
@@ -17,12 +17,29 @@ and that means looking up the player by ID. I don't want to search by property, 
 By returning an object with player ID keys corresponding to player values, I spend O(n) populating the object during the fetch,
 then O(1) x4 looking up four players by ID in the client. It also makes my data easier to search in general. */
 
+// Request types: Request params (?), Response body, request body, request query
+type PlayerGetRequest = Request<{}, unknown, never, PlayerSearchParams>;
+
 /**
  * Retrieves a list of players.
  * Returns type PlayerResponseGroup
  */
-router.get("/", async (req, res, next) => {
-  const players = await database.getPlayers();
+router.get("/", async (req: PlayerGetRequest, res, next) => {
+  console.log(req.query); // At some point I should sanitize these
+  const { match_id, ...params } = req.query;
+  let players;
+  try {
+    if (match_id) {
+      players = await database.getMatchPlayers(match_id as MatchId);
+    } else {
+      players = await database.getPlayers(params);
+    }
+  } catch (e) {
+    if (e instanceof QueryParamError) {
+      res.status(500).send(e.message);
+    }
+  }
+
   res.send(players);
 });
 
