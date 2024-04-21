@@ -22,7 +22,12 @@ interface PlayerPersonalDetails {
   notes: string | null;
 }
 
-type PlayerResponse = PlayerDetails & PlayerPersonalDetails;
+interface PlayerExtras {
+  total_score: number;
+  matches_played: number;
+}
+
+type PlayerResponse = PlayerDetails & PlayerPersonalDetails & Partial<PlayerExtras>;
 
 const defaultPlayer: PlayerResponse = {
   player_id: "",

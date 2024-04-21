@@ -10,7 +10,7 @@ import {
   PlayerResponse,
   PlayerUpdateParams,
 } from "@mmd/common";
-import { SQL, and, eq, or } from "drizzle-orm";
+import { SQL, and, countDistinct, eq, or, sql, sum } from "drizzle-orm";
 import { PgTableWithColumns, TableConfig } from "drizzle-orm/pg-core";
 import { match, player, score } from "../../data/schema.js";
 import { database } from "../../setup.js";
@@ -26,8 +26,35 @@ async function getPlayer(id: PlayerId): Promise<PlayerResponse | undefined> {
 /* Players */
 
 async function getPlayers(params?: PlayerUpdateParams) {
-  return await database.select().from(player).where(buildSearchParams(player, params));
+  const p = await database
+    .select({
+      player_id: player.player_id,
+      twitch_name: player.twitch_name,
+      twitch_alt: player.twitch_alt,
+      discord_name: player.discord_name,
+      twitter_name: player.twitter_name,
+      in_brackets: player.in_brackets,
+      status: player.status,
+      pronunciation_notes: player.pronunciation_notes,
+      pronouns: player.pronouns,
+      accessibility: player.accessibility,
+      timezone: player.timezone,
+      availability: player.availability,
+      notes: player.notes,
+      matches_played: countDistinct(score.match_id),
+      total_score: coalesce(sum(score.points), sql`0`).mapWith(Number),
+    })
+    .from(player)
+    .leftJoin(score, eq(score.player_id, player.player_id))
+    .where(buildSearchParams(player, params))
+    .groupBy(player.player_id);
+  /* const extras = await database
+    .select({ played_matches: countDistinct(score.match_id), total_score: sum(score.points) || 0 })
+    .from(player);
+ */
+  return p;
 }
+
 async function getMatchPlayers(match: MatchId): Promise<PlayerInMatch[]> {
   return await database
     .select({
@@ -107,6 +134,10 @@ async function updateMatch(req: MatchUpdateRequest) {
       console.log(`Updated values ${req.players.update} for match ${req.match_id}`);
     });
   });
+}
+
+function coalesce<T>(value: SQL.Aliased<T> | SQL<T>, defaultValue: SQL) {
+  return sql<T>`coalesce(${value}, ${defaultValue})`;
 }
 
 function buildSearchParams<T extends TableConfig>(schema: PgTableWithColumns<T>, params?: Object) {
