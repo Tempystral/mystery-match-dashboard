@@ -1,18 +1,20 @@
 import { Outcome } from "./enums.js";
 import { PlayerStatus, Round } from "./enums.js";
+import { MatchId, PlayerId, ScoreId } from "./types.js";
 
 interface PlayerDetails {
   player_id: string;
   twitch_name: string;
-  twitch_alt: string | null;
   discord_name: string;
-  twitter_name: string | null;
+  // Discord ID?
   in_brackets: boolean;
   status: PlayerStatus;
   pronouns: string | null;
 }
 
 interface PlayerPersonalDetails {
+  twitch_alt: string | null;
+  twitter_name: string | null;
   pronunciation_notes: string | null;
   accessibility: string | null;
   timezone: string | null;
@@ -65,20 +67,29 @@ const defaultMatchResponse: MatchResponse = {
   vod: "",
 };
 
-type ScoreResponse = {
-  score_id: string;
-  player_id: string;
+type ScoreMetadata = {
   points: number;
   outcome: Outcome;
 };
+type ScoreResponse = ScoreMetadata & {
+  score_id: ScoreId;
+  match_id: MatchId;
+  player_id: PlayerId;
+};
 
 const defaultScoreResponse: ScoreResponse = {
-  score_id: "",
-  player_id: "",
+  score_id: "" as ScoreId,
+  player_id: "" as PlayerId,
+  match_id: "" as MatchId,
   points: 0,
   outcome: Outcome.SCORE,
 };
 
-export { PlayerDetails, PlayerPersonalDetails, PlayerResponse, PlayerResponseGroup, defaultPlayer };
+type PlayerInMatch = {
+  player: PlayerDetails;
+  score: ScoreMetadata | null;
+};
+
+export { PlayerDetails, PlayerPersonalDetails, PlayerResponse, PlayerInMatch, defaultPlayer };
 export { MatchResponse, MatchResponseGroup, defaultMatchResponse };
 export { ScoreResponse, defaultScoreResponse };
