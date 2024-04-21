@@ -1,9 +1,7 @@
-import { UpdateValues, ValidationError } from "@sequelize/core";
 import express from "express";
 import { body } from "express-validator";
-import { Player } from "../../data/models.js";
-import * as database from "../services/dbService.js";
 import sheets from "../services/sheetsService.js";
+import database from "../services/database.js";
 
 const router = express.Router();
 
@@ -24,11 +22,11 @@ then O(1) x4 looking up four players by ID in the client. It also makes my data 
  * Returns type PlayerResponseGroup
  */
 router.get("/", async (req, res, next) => {
-  const players = await database.getPlayers({ extras: true });
+  const players = await database.getPlayers();
   res.send(players);
 });
 
-// This is only for now - this should be replaced by an API that can accept arbitrary values via URL parameters
+/* // This is only for now - this should be replaced by an API that can accept arbitrary values via URL parameters
 router.get("/partial", async (req, res, next) => {
   const players = await database.getPartialPlayers({ extras: true });
   res.send(players);
@@ -60,7 +58,7 @@ router.patch("/", body("value.player_id").exists({ values: "falsy" }).isUUID(), 
   }
   return res.status(200).send(result);
 });
-
+*/
 // Import
 router.get("/import", async (req, res, next) => {
   const doc = await sheets.loadDocument(process.env.MATCHES_SPREADSHEET!);

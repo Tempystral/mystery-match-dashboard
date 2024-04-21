@@ -8,9 +8,9 @@ const UDActions = {
   onDelete: "cascade" as UpdateDeleteAction,
 };
 
-const playerStatus = pgEnum("status", Object.values<string>(PlayerStatus) as [string, ...string[]]);
-const round = pgEnum("round", Object.values<string>(Round) as [string, ...string[]]);
-const outcome = pgEnum("outcome", Object.values(Outcome) as [string, ...string[]]);
+export const playerStatus = pgEnum("status", Object.values<string>(PlayerStatus) as [string, ...string[]]);
+export const round = pgEnum("round", Object.values<string>(Round) as [string, ...string[]]);
+export const outcome = pgEnum("outcome", Object.values(Outcome) as [string, ...string[]]);
 
 export const player = pgTable("player", {
   player_id: text("player_id")

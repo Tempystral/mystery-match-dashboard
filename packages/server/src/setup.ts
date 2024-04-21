@@ -1,14 +1,12 @@
 import { Events, IntentsBitField } from "discord.js";
 import { Client } from "discordx";
-import { Match, Score, Player } from "./data/models.js";
-import { Sequelize } from "@sequelize/core";
 
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import router from "./api/router.js";
-import { PGlite } from "@electric-sql/pglite";
-import { drizzle } from "drizzle-orm/pglite";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pg from "pg";
 import * as schema from "./data/schema.js";
 
 function setup_web() {
@@ -28,8 +26,16 @@ function setup_web() {
 }
 
 async function setup_database() {
-  const client = new PGlite("./database");
-  const db = drizzle(client, { schema });
+  const client = new pg.Client({
+    host: "localhost",
+    port: 5432,
+    database: "mmd",
+    user: "azurite",
+    password: "azurite",
+  });
+  await client.connect();
+  const s = { ...schema };
+  const db = drizzle(client, { schema: s });
   return db;
 }
 

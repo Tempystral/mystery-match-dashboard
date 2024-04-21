@@ -1,11 +1,14 @@
 import { JWT } from "google-auth-library";
 import { GoogleSpreadsheet, GoogleSpreadsheetRow } from "google-spreadsheet";
 
-import { Op } from "@sequelize/core";
 import { parse } from "date-fns";
 import { range } from "discord.js";
-import { Match, Player } from "../../data/models.js";
-import { Round } from "@mmd/common";
+import { Round, PlayerStatus, Outcome } from "@mmd/common";
+
+import { match, player, score } from "../../data/schema.js";
+import database from "./database.js";
+import { database as db } from "../../setup.js";
+import { eq, or } from "drizzle-orm";
 
 class GoogleSheetsService {
   #auth?: JWT;
@@ -150,44 +153,41 @@ class GoogleSheetsService {
   private async buildMatch(tourney: string, dayRow: GoogleSpreadsheetRow, rows: GoogleSpreadsheetRow[]) {
     const d = this.buildDate(dayRow.get("Time"), rows[0].get("Time"));
     const l = Number((rows[0].get("Length") as string).match(/\d+/)?.[0]);
-    const [match, created] = await Match.findCreateFind({
-      where: {
-        tournament: tourney,
-        date: d,
-      },
-      defaults: {
-        tournament: tourney,
-        date: d,
-        game: rows[0].get("Game"),
-        platform: rows[0].get("Game Platform"),
-        gamemaster: rows[0].get("GM"),
-        round: this.getRound(rows),
-        length: l,
-        vod: rows[0].get("VOD"),
-      },
-      include: [
-        {
-          model: Player,
-          as: "players",
-        },
-      ],
+    const added = await database.addMatch({
+      date: d,
+      tournament: tourney,
+      game: rows[0].get("Game"),
+      platform: rows[0].get("Game Platform"),
+      gamemaster: rows[0].get("GM"),
+      round: this.getRound(rows),
+      length: l,
+      vod: rows[0].get("VOD"),
     });
-    if (created) {
-      console.log(`Created ${match.match_id}`);
-      const players = await this.getPlayersInMatch(rows);
+
+    if (added[0]) {
+      console.log(`Created ${added[0].match_id}`);
+      const matchPlayers = await this.getPlayersInMatch(rows);
       console.log(
-        `Found ${players.length} players: [${players.map((p) => " " + p.player?.twitch_name)}] for match ${match.match_id} at ${match.date}}`,
+        `Found ${matchPlayers.length} players: [${matchPlayers.map((p) => " " + p.player?.twitch_name)}] for match ${added[0].match_id} at ${added[0].date}}`,
       );
-      players.forEach(async (p) => {
-        if (p.player) {
-          console.log(`Adding ${p.player.twitch_name} with score ${p.points} to match ${match.game}`);
-          await match.addPlayer(p.player, { through: { points: p.points } });
-        }
-      });
+
+      await db.insert(score).values(
+        matchPlayers
+          .filter((p) => p.player != undefined)
+          .map((p) => {
+            console.log(`Adding ${p.player!.twitch_name} with score ${p.points} to match ${added[0].game}`);
+            return {
+              match_id: added[0].match_id,
+              player_id: p.player!.player_id,
+              outcome: p.outcome,
+              points: p.points,
+            };
+          }),
+      );
 
       console.log("Added players to match.");
     } else {
-      console.log(`Could not create ${match?.match_id}`);
+      console.log(`Could not create match for date ${d}`);
     }
   }
 
@@ -197,32 +197,23 @@ class GoogleSheetsService {
     const rows = await sheet.getRows();
 
     rows.forEach(async (row) => {
-      const [player, created] = await Player.findCreateFind({
-        where: {
-          twitch_name: row.get("Twitch Name"),
-          discord_name: row.get("Discord Name"),
-        },
-        defaults: {
-          twitch_name: row.get("Twitch Name"),
-          discord_name: row.get("Discord Name"),
-          twitter_name: row.get("Twitter Handle"),
-          pronunciation_notes: row.get("Name Pronunciation"),
-          twitch_alt: row.get("Alt Stream Name"),
-          pronouns: row.get("Preferred Pronouns"),
-          accessibility: row.get("Accessibility Needs"),
-          timezone: row.get("Timezone"),
-          availability: row.get("Availability"),
-          notes: row.get("Notes"),
-        },
-        include: [
-          {
-            model: Match,
-            as: "matches",
-          },
-        ],
+      const p = await database.addPlayer({
+        twitch_name: row.get("Twitch Name") as string,
+        discord_name: row.get("Discord Name") as string,
+        twitter_name: row.get("Twitter Handle") as string,
+        pronunciation_notes: row.get("Name Pronunciation") as string,
+        twitch_alt: row.get("Alt Stream Name") as string,
+        pronouns: row.get("Preferred Pronouns") as string,
+        accessibility: row.get("Accessibility Needs") as string,
+        timezone: row.get("Timezone") as string,
+        availability: row.get("Availability") as string,
+        notes: row.get("Notes") as string,
+        in_brackets: false,
+        status: PlayerStatus.ACTIVE,
       });
-      if (created) {
-        console.log(`Created player ${player.twitch_name}`);
+
+      if (p[0]) {
+        console.log(`Created player ${p[0].twitch_name}`);
       } else {
         console.log(`Could not create player ${row.get("Twitch Name")}!`);
       }
@@ -230,20 +221,51 @@ class GoogleSheetsService {
   }
 
   private async getPlayersInMatch(rows: GoogleSpreadsheetRow[]) {
-    const players = await Player.findAll({
-      where: {
-        [Op.or]: rows.map((r) => {
-          return { twitch_name: r.get("Players") as string };
-        }),
-      },
-    });
+    const tests = rows.map((r) => eq(player.twitch_name, r.get("Players") as string));
+    const players = await db
+      .select()
+      .from(player)
+      .where(or(...tests));
 
     return rows.map((r) => {
-      const twitch_name = r.get("Players") as string;
-      const score = r.get("Scores") as number;
-      return { player: players.find((p) => p.twitch_name === twitch_name), points: score };
+      const { outcome, points } = parsePoints(r.get("Scores"));
+      return {
+        player: players.find((p) => p.twitch_name === (r.get("Players") as string)),
+        outcome,
+        points,
+      };
     });
   }
+}
+
+function parsePoints(input: string | number) {
+  let outcome = Outcome.SCORE;
+  let points = 0;
+  if (Number(input)) {
+    points = input as number;
+  } else {
+    switch (input) {
+      case "Mulligan":
+        outcome = Outcome.MULLIGAN;
+        break;
+      case "Forfeit":
+        outcome = Outcome.FORFEIT;
+        break;
+      case "Zombie":
+        outcome = Outcome.ZOMBIE;
+        break;
+      case "Disqualified":
+        outcome = Outcome.DISQUALIFIED;
+        break;
+      case "Lose":
+        outcome = Outcome.LOSE;
+        break;
+      case "Win":
+        outcome = Outcome.WIN;
+        break;
+    }
+  }
+  return { outcome, points };
 }
 
 const service = await GoogleSheetsService.init(
