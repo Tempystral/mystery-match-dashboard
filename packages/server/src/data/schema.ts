@@ -1,4 +1,4 @@
-import { Outcome, PlayerStatus, Round } from "@mmd/common";
+import { MatchId, Outcome, PlayerId, PlayerStatus, Round, ScoreId } from "@mmd/common";
 import { randomUUID } from "crypto";
 import { relations } from "drizzle-orm";
 import { UpdateDeleteAction, boolean, integer, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
@@ -14,8 +14,9 @@ export const outcome = pgEnum("outcome", Object.values(Outcome) as [string, ...s
 
 export const player = pgTable("player", {
   player_id: text("player_id")
+    .$type<PlayerId>()
     .primaryKey()
-    .$defaultFn(() => randomUUID().toString()),
+    .$defaultFn(() => randomUUID().toString() as PlayerId),
   twitch_name: text("twitch_name").notNull(),
   twitch_alt: text("twitch_alt"),
   discord_name: text("discord_name").notNull(),
@@ -32,8 +33,9 @@ export const player = pgTable("player", {
 
 export const match = pgTable("match", {
   match_id: text("match_id")
+    .$type<MatchId>()
     .primaryKey()
-    .$defaultFn(() => randomUUID().toString()),
+    .$defaultFn(() => randomUUID().toString() as MatchId),
   tournament: text("tournament").notNull().default(""),
   date: timestamp("date", { mode: "date", withTimezone: true }).notNull(),
   game: text("game"),
@@ -54,8 +56,9 @@ export const matchRelations = relations(match, ({ many }) => ({
 
 export const score = pgTable("score", {
   score_id: text("score_id")
+    .$type<ScoreId>()
     .primaryKey()
-    .$defaultFn(() => randomUUID().toString()),
+    .$defaultFn(() => randomUUID().toString() as ScoreId),
   player_id: text("player_id")
     .notNull()
     .references(() => player.player_id, UDActions),
