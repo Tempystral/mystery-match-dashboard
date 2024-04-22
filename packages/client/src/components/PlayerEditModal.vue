@@ -1,44 +1,42 @@
 <script setup lang="ts">
-    import { diff } from "deep-object-diff";
-    import { clone, isEmpty } from "lodash-es";
-    import { ref } from 'vue';
-    import { PlayerResponse, PlayerUpdateRequest, defaultPlayer } from "@mmd/common"
-    import { PlayerStatusLabel } from "@mmd/common"
-  import { watch } from "vue";
+import { PlayerId, PlayerResponse, PlayerStatusLabel, PlayerUpdateRequest, defaultPlayer } from "@mmd/common";
+import { diff } from "deep-object-diff";
+import { clone, isEmpty } from "lodash-es";
+import { ref, watch } from 'vue';
 
-    const props = defineProps<{
-      player: PlayerResponse
-    }>();
+const props = defineProps<{
+  player: PlayerResponse
+}>();
 
-    const emit = defineEmits<{
-      updatePlayer: [value: PlayerUpdateRequest];
-    }>();
+const emit = defineEmits<{
+  updatePlayer: [value: PlayerUpdateRequest];
+}>();
 
-    const showDialog = defineModel<boolean>({});
+const showDialog = defineModel<boolean>({});
 
-    const editedPlayer = ref<PlayerResponse>(defaultPlayer as PlayerResponse);
+const editedPlayer = ref<PlayerResponse>(defaultPlayer as PlayerResponse);
 
-    watch(showDialog, (isShowing) => {
-      if (isShowing) {
-        // Clone prop to make a distinct player with the same properties
-        // Convenient because we can't write to a prop from inside here anyways
-        editedPlayer.value = clone(props.player);
-      }
-    })
+watch(showDialog, (isShowing) => {
+  if (isShowing) {
+    // Clone prop to make a distinct player with the same properties
+    // Convenient because we can't write to a prop from inside here anyways
+    editedPlayer.value = clone(props.player);
+  }
+})
 
-    // Determine what, if any properties have changed and emit a request to update data.
-    const submit = () => {
-      const changedValues = diff(props.player, editedPlayer.value);
-      if (!isEmpty(changedValues)) {
-        console.log(changedValues);
-        emit("updatePlayer", {player_id: props.player.player_id, player: changedValues});
-      }
-      closeDialog();
-    }
+// Determine what, if any properties have changed and emit a request to update data.
+const submit = () => {
+  const changedValues = diff(props.player, editedPlayer.value);
+  if (!isEmpty(changedValues)) {
+    console.log(changedValues);
+    emit("updatePlayer", {player_id: props.player.player_id as PlayerId, player: changedValues});
+  }
+  closeDialog();
+}
 
-    const closeDialog = () => showDialog.value = false;
+const closeDialog = () => showDialog.value = false;
 
-    const statuses = Object.entries(PlayerStatusLabel).map(e => {return {title: e[1], value: e[0]}});
+const statuses = Object.entries(PlayerStatusLabel).map(e => {return {title: e[1], value: e[0]}});
 </script>
 <template>
   <v-dialog max-width="800px" v-model="showDialog">

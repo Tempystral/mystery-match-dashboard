@@ -3,7 +3,7 @@ import { PlayerStatus, Round } from "./enums.js";
 import { MatchId, PlayerId, ScoreId } from "./types.js";
 
 interface PlayerDetails {
-  player_id: string;
+  player_id: PlayerId;
   twitch_name: string;
   discord_name: string;
   // Discord ID?
@@ -28,9 +28,10 @@ interface PlayerExtras {
 }
 
 type PlayerResponse = PlayerDetails & PlayerPersonalDetails & Partial<PlayerExtras>;
+type MinimalPlayerResponse = PlayerDetails & Partial<PlayerExtras>;
 
 const defaultPlayer: PlayerResponse = {
-  player_id: "",
+  player_id: "" as PlayerId,
   twitch_name: "",
   twitch_alt: "",
   discord_name: "",
@@ -45,8 +46,8 @@ const defaultPlayer: PlayerResponse = {
   notes: "",
 };
 
-type MatchResponse = {
-  match_id: string;
+type MatchData = {
+  match_id: MatchId;
   tournament: string;
   date: Date;
   game: string | null;
@@ -57,19 +58,24 @@ type MatchResponse = {
   vod: string | null;
 };
 
-type MatchResponseGroup = Record<string, MatchResponse>;
-type PlayerResponseGroup = Record<string, PlayerResponse>;
+type MatchResponse = {
+  match: MatchData;
+  scores: ScoreResponse[];
+};
 
 const defaultMatchResponse: MatchResponse = {
-  match_id: "",
-  tournament: "",
-  date: new Date(0),
-  game: undefined,
-  platform: "",
-  gamemaster: "",
-  round: Round.UNKNOWN,
-  length: 1,
-  vod: "",
+  match: {
+    match_id: "" as MatchId,
+    tournament: "",
+    date: new Date(0),
+    game: undefined,
+    platform: "",
+    gamemaster: "",
+    round: Round.UNKNOWN,
+    length: 1,
+    vod: "",
+  },
+  scores: [],
 };
 
 type ScoreMetadata = {
@@ -95,6 +101,14 @@ type PlayerInMatch = {
   score: ScoreMetadata | null;
 };
 
-export { PlayerDetails, PlayerPersonalDetails, PlayerResponse, PlayerInMatch, defaultPlayer };
-export { MatchResponse, MatchResponseGroup, defaultMatchResponse };
-export { ScoreResponse, defaultScoreResponse };
+export {
+  PlayerDetails,
+  PlayerPersonalDetails,
+  PlayerResponse,
+  PlayerExtras,
+  MinimalPlayerResponse,
+  PlayerInMatch,
+  defaultPlayer,
+};
+export { MatchResponse, MatchData, defaultMatchResponse };
+export { ScoreResponse, ScoreMetadata, defaultScoreResponse };

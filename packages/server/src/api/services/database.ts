@@ -1,20 +1,24 @@
 import {
+  MatchData,
   MatchId,
   MatchInsertParams,
   MatchParams,
-  MatchResponse,
   MatchUpdateRequest,
   PlayerId,
   PlayerInMatch,
   PlayerInsertParams,
   PlayerResponse,
   PlayerUpdateParams,
+  QueryParamError,
 } from "@mmd/common";
-import { SQL, and, countDistinct, eq, or, sql, sum } from "drizzle-orm";
+import { SQL, and, asc, countDistinct, desc, eq, or, sql, sum } from "drizzle-orm";
 import { PgTableWithColumns, TableConfig } from "drizzle-orm/pg-core";
 import { match, player, score } from "../../data/schema.js";
 import { database } from "../../setup.js";
-import { QueryParamError } from "@mmd/common";
+
+type Player = typeof player.$inferSelect;
+type Match = typeof match.$inferSelect;
+type Score = typeof score.$inferSelect;
 
 async function getPlayer(id: PlayerId): Promise<PlayerResponse | undefined> {
   const result = await database.query.player.findFirst({
@@ -26,7 +30,7 @@ async function getPlayer(id: PlayerId): Promise<PlayerResponse | undefined> {
 /* Players */
 
 async function getPlayers(params?: PlayerUpdateParams) {
-  const p = await database
+  return await database
     .select({
       player_id: player.player_id,
       twitch_name: player.twitch_name,
@@ -47,12 +51,26 @@ async function getPlayers(params?: PlayerUpdateParams) {
     .from(player)
     .leftJoin(score, eq(score.player_id, player.player_id))
     .where(buildSearchParams(player, params))
-    .groupBy(player.player_id);
-  /* const extras = await database
-    .select({ played_matches: countDistinct(score.match_id), total_score: sum(score.points) || 0 })
-    .from(player);
- */
-  return p;
+    .groupBy(player.player_id)
+    .orderBy(asc(player.twitch_name));
+}
+
+async function getMinimalPlayers() {
+  return await database
+    .select({
+      player_id: player.player_id,
+      twitch_name: player.twitch_name,
+      discord_name: player.discord_name,
+      in_brackets: player.in_brackets,
+      status: player.status,
+      pronouns: player.pronouns,
+      matches_played: countDistinct(score.match_id),
+      total_score: coalesce(sum(score.points), sql`0`).mapWith(Number),
+    })
+    .from(player)
+    .leftJoin(score, eq(score.player_id, player.player_id))
+    .groupBy(player.player_id)
+    .orderBy(asc(player.twitch_name));
 }
 
 async function getMatchPlayers(match: MatchId): Promise<PlayerInMatch[]> {
@@ -73,7 +91,8 @@ async function getMatchPlayers(match: MatchId): Promise<PlayerInMatch[]> {
     })
     .from(player)
     .leftJoin(score, eq(score.player_id, player.player_id))
-    .where(eq(score.match_id, match));
+    .where(eq(score.match_id, match))
+    .orderBy(asc(player.twitch_name));
 }
 
 async function addPlayer(p: PlayerInsertParams) {
@@ -161,6 +180,7 @@ function buildSearchParams<T extends TableConfig>(schema: PgTableWithColumns<T>,
 export default {
   getPlayer,
   getPlayers,
+  getMinimalPlayers,
   getMatchPlayers,
   addPlayer,
   addPlayers,

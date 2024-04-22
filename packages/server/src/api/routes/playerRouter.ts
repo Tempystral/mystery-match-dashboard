@@ -43,12 +43,12 @@ router.get("/", async (req: PlayerGetRequest, res, next) => {
   res.send(players);
 });
 
-/* // This is only for now - this should be replaced by an API that can accept arbitrary values via URL parameters
 router.get("/partial", async (req, res, next) => {
-  const players = await database.getPartialPlayers({ extras: true });
+  const players = await database.getMinimalPlayers();
   res.send(players);
 });
 
+/*
 // Search players
 router.post("/", async (req, res, next) => {
   res.send(req.body);
