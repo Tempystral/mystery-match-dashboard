@@ -1,5 +1,5 @@
-import { PlayerResponse, MatchResponse, PlayerDetails } from "./response.js";
 import { Outcome } from "./enums.js";
+import { MatchData, PlayerDetails, PlayerResponse } from "./response.js";
 import { MatchId, PlayerId } from "./types.js";
 
 type PlayerInsertParams = Omit<PlayerResponse, "player_id">;
@@ -11,7 +11,7 @@ type PlayerUpdateRequest = {
   player: PlayerUpdateParams;
 };
 
-type MatchInsertParams = Omit<MatchResponse, "match_id">;
+type MatchInsertParams = Omit<MatchData, "match_id">;
 type MatchParams = Partial<MatchInsertParams>;
 type MatchPlayerUpdateValue = { player_id: PlayerId; points?: number; outcome?: Outcome };
 type MatchUpdateRequest = {
@@ -24,5 +24,13 @@ type MatchUpdateRequest = {
   };
 };
 
-export { PlayerUpdateParams, PlayerInsertParams, PlayerSearchParams, PlayerUpdateRequest };
-export { MatchParams, MatchInsertParams, MatchUpdateRequest, MatchPlayerUpdateValue };
+export {
+  MatchInsertParams,
+  MatchParams,
+  MatchPlayerUpdateValue,
+  MatchUpdateRequest,
+  PlayerInsertParams,
+  PlayerSearchParams,
+  PlayerUpdateParams,
+  PlayerUpdateRequest,
+};

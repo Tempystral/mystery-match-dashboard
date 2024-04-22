@@ -105,7 +105,7 @@ async function addPlayers(...ps: PlayerInsertParams[]) {
 
 /* Matches */
 
-async function getMatch(id: MatchId): Promise<MatchResponse | undefined> {
+async function getMatch(id: MatchId): Promise<MatchData | undefined> {
   const result = await database.query.match.findFirst({
     where: eq(match.match_id, id),
   });
@@ -113,7 +113,28 @@ async function getMatch(id: MatchId): Promise<MatchResponse | undefined> {
 }
 
 async function getMatches(params?: MatchParams) {
-  return await database.select().from(match).where(buildSearchParams(match, params));
+  const rows = await database
+    .select({
+      match: match,
+      score: score,
+    })
+    .from(match)
+    .where(buildSearchParams(match, params))
+    .leftJoin(score, eq(score.match_id, match.match_id))
+    .orderBy(desc(match.date));
+  const reduced = rows.reduce<Record<MatchId, { match: Match; scores: Score[] }>>((acc, row) => {
+    const { match, score } = row;
+    if (!acc[match.match_id]) {
+      acc[match.match_id] = { match, scores: [] };
+    }
+
+    if (score) {
+      acc[match.match_id].scores.push(score);
+    }
+
+    return acc;
+  }, {});
+  return Object.values(reduced);
 }
 
 async function addMatch(m: MatchInsertParams) {
