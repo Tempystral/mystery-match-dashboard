@@ -72,7 +72,7 @@ import { useMatchQuery, usePartialPlayers, usePlayerQuery } from '@client/compos
     </v-card>
 
     <match-edit-modal
-      :match="editedItem"
+      :currentMatch="editedItem"
       :playerData="playerData"
       :player-error="playerError"
       :is-loading="playerLoading"

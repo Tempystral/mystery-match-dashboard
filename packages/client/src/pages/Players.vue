@@ -7,7 +7,7 @@
   import { useMutatePlayer } from "../composables/mutations"
 import { usePlayerQuery } from '@client/composables/queries';
 
-  const { isPending, data: players, isRefetching } = usePlayerQuery();
+  const { isPending, data: players, isRefetching } = usePlayerQuery({enabled: true});
 
   const { error: mutError, mutate, reset } = useMutatePlayer();
 

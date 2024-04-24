@@ -2,7 +2,7 @@
 import { diff } from "deep-object-diff";
 import { clone, isEmpty } from "lodash-es";
 import { ref, toRaw, watch, computed } from 'vue';
-import { MatchResponse, MatchUpdateRequest, MatchPlayerUpdateValue, defaultMatchResponse, RoundLabel, ScoreResponse, defaultScoreResponse,  PlayerId, defaultPlayer, MatchParams } from "@mmd/common"
+import { MatchResponse, MatchUpdateRequest, MatchPlayerUpdateValue, defaultMatchResponse, RoundLabel, ScoreResponse, defaultScoreResponse,  PlayerId, defaultPlayer, MatchInsertParams } from "@mmd/common"
 import DateFnsAdapter from "@date-io/date-fns";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import '@vuepic/vue-datepicker/dist/main.css';
@@ -11,7 +11,7 @@ import { useDateTime } from "@client/composables/dateTime";
 import { MinimalPlayerResponse, MatchData } from "@mmd/common";
 
 const props = defineProps<{
-  match: MatchResponse,
+  currentMatch: MatchResponse,
   playerData?: MinimalPlayerResponse[],
   isLoading: boolean,
   playerError: Error | null
@@ -71,11 +71,11 @@ watch(showDialog, (isShowing) => {
 })
 
 function setDefaults() {
-  editedMatch.value = clone(props.match.match);
-  playerScores.value = new Map(props.match.scores.map(score => (
+  editedMatch.value = clone(props.currentMatch.match);
+  playerScores.value = new Map(props.currentMatch.scores.map(score => (
     [score.player_id, clone(score)]
   )));
-  selectedPlayers.value = props.match.scores.map(score =>
+  selectedPlayers.value = props.currentMatch.scores.map(score =>
     props.playerData?.find(p => p.player_id === score.player_id) ?? defaultPlayer
   ).sort((a, b) => a.twitch_name.localeCompare(b.twitch_name));
 
@@ -105,15 +105,15 @@ function toChangedValues(score: ScoreResponse): MatchPlayerUpdateValue {
 function submit() {
   // Get edited data and original data
   const eMatch = toRaw(editedMatch.value)
-  const oMatch = toRaw(props.match.match)
+  const oMatch = toRaw(props.currentMatch.match)
   // Fix date-as-string from backend breaking comparisons
   oMatch.date = dateUtil.date(oMatch.date);
   eMatch.date = dateUtil.date(editedDateTime.value);
 
   // Compare match data
   const request: MatchUpdateRequest = {
-    match_id: props.match.match.match_id,
-    match: diff(oMatch, eMatch) as MatchParams,
+    match_id: props.currentMatch.match.match_id,
+    match: diff(oMatch, eMatch) as MatchInsertParams,
     players: {
       add: [],
       update: [],
@@ -122,7 +122,7 @@ function submit() {
   }
 
   // Get score lists for comparison
-  const initialScores = props.match.scores.map(p => toChangedValues(toRaw(p)));
+  const initialScores = props.currentMatch.scores.map(p => toChangedValues(toRaw(p)));
   const finalScores = toRaw(playerScores.value);
 
   // Find players in the original list NOT in the final one
