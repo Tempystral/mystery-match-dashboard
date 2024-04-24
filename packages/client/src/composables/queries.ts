@@ -12,7 +12,7 @@ import { MaybeRef } from "vue";
 
 export function usePlayerQuery<T = PlayerResponse[]>(options?: {
   params?: PlayerSearchParams;
-  enabled?: MaybeRef<object>;
+  enabled?: unknown;
 }) {
   const { params, enabled } = options ?? {};
   const keys = params ? (Object.keys(params) as (keyof PlayerSearchParams)[]) : [];
@@ -30,9 +30,14 @@ export function usePartialPlayers() {
   });
 }
 
-export function useMatchQuery() {
+export function useMatchQuery(options?: { limit: number }) {
+  const keys = options ? Object.keys(options) : [];
+  const query =
+    keys.length && options
+      ? "?" + keys.map((k) => `${k}=${options[k as keyof typeof options]}`).join("&")
+      : "";
   return useQuery({
     queryKey: ["matches"],
-    queryFn: () => api.get<MatchResponse[]>("/matches", {}),
+    queryFn: () => api.get<MatchResponse[]>(`/matches${query}`, {}),
   });
 }

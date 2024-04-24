@@ -1,14 +1,17 @@
-import express from "express";
-import { body } from "express-validator";
-import sheets from "../services/sheetsService.js";
-import { MatchUpdateRequest } from "@mmd/common";
+import { MatchSearchParams } from "@mmd/common";
+import express, { Request } from "express";
 import database from "../services/database.js";
+import sheets from "../services/sheetsService.js";
 
 const router = express.Router();
 
+type MatchGetRequest = Request<{}, unknown, never, MatchSearchParams>;
+
 // Get matches
-router.get("/", async (req, res, next) => {
-  const matches = await database.getMatches();
+router.get("/", async (req: MatchGetRequest, res, next) => {
+  const { limit, ...params } = req.query;
+
+  const matches = await database.getMatches(params, limit);
   res.send(matches);
 });
 /* 

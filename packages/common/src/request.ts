@@ -12,11 +12,11 @@ type PlayerUpdateRequest = {
 };
 
 type MatchInsertParams = Omit<MatchData, "match_id">;
-type MatchParams = Partial<MatchInsertParams>;
+type MatchSearchParams = Partial<MatchData> & { limit?: number };
 type MatchPlayerUpdateValue = { player_id: PlayerId; points?: number; outcome?: Outcome };
 type MatchUpdateRequest = {
   match_id: MatchId;
-  match: MatchParams;
+  match: Partial<MatchInsertParams>;
   players: {
     add: MatchPlayerUpdateValue[];
     update: MatchPlayerUpdateValue[];
@@ -26,7 +26,7 @@ type MatchUpdateRequest = {
 
 export {
   MatchInsertParams,
-  MatchParams,
+  MatchSearchParams,
   MatchPlayerUpdateValue,
   MatchUpdateRequest,
   PlayerInsertParams,

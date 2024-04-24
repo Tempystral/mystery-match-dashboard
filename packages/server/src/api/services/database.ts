@@ -2,7 +2,7 @@ import {
   MatchData,
   MatchId,
   MatchInsertParams,
-  MatchParams,
+  MatchSearchParams,
   MatchUpdateRequest,
   PlayerId,
   PlayerInMatch,
@@ -12,7 +12,7 @@ import {
   QueryParamError,
 } from "@mmd/common";
 import { SQL, and, asc, countDistinct, desc, eq, or, sql, sum } from "drizzle-orm";
-import { PgTableWithColumns, TableConfig } from "drizzle-orm/pg-core";
+import { PgSelect, PgSelectQueryBuilder, PgTableWithColumns, TableConfig } from "drizzle-orm/pg-core";
 import { match, player, score } from "../../data/schema.js";
 import { database } from "../../setup.js";
 
@@ -112,16 +112,31 @@ async function getMatch(id: MatchId): Promise<MatchData | undefined> {
   return result;
 }
 
-async function getMatches(params?: MatchParams) {
+function withLimit<T extends PgSelectQueryBuilder>(qb: T, lim?: number) {
+  if (lim) {
+    return qb.limit(lim);
+  } else {
+    return qb;
+  }
+}
+
+async function getMatches(params?: MatchSearchParams, limit?: number) {
+  const q = database
+    .select()
+    .from(match)
+    .where(buildSearchParams(match, params))
+    .orderBy(desc(match.date))
+    .$dynamic();
+  const matchQuery = withLimit(q, limit).as("matchQuery");
   const rows = await database
     .select({
       match: match,
       score: score,
     })
     .from(match)
-    .where(buildSearchParams(match, params))
-    .leftJoin(score, eq(score.match_id, match.match_id))
-    .orderBy(desc(match.date));
+    .innerJoin(matchQuery, eq(matchQuery.match_id, match.match_id))
+    .leftJoin(score, eq(score.match_id, match.match_id));
+
   const reduced = rows.reduce<Record<MatchId, { match: Match; scores: Score[] }>>((acc, row) => {
     const { match, score } = row;
     if (!acc[match.match_id]) {
