@@ -28,10 +28,10 @@ function setup_web() {
 async function setup_database() {
   const client = new pg.Client({
     host: "localhost",
-    port: 5432,
-    database: "mmd",
-    user: "azurite",
-    password: "azurite",
+    port: Number(process.env.PGPORT) ?? 5432,
+    database: process.env.PGDB,
+    user: process.env.PGUSER,
+    password: process.env.PGPASSWORD,
   });
   await client.connect();
   const s = { ...schema };
