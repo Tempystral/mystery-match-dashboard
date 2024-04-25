@@ -14,22 +14,22 @@ import { useMatchQuery, usePartialPlayers, usePlayerQuery } from '@client/compos
 
   const { data: playerData, error: playerError, isLoading: playerLoading } = usePartialPlayers();
 
-  const showDialog = ref(false);
-  const editIndex = ref(-1);
-  const editedItem = ref<MatchResponse>(defaultMatchResponse as MatchResponse);
+const showDialog = ref(false);
+const editIndex = ref(-1);
+const editedItem = ref<MatchResponse>(defaultMatchResponse as MatchResponse);
 
-  const editMatch = (match: MatchResponse) => {
-    if (matches.value != undefined) {
-    editIndex.value = matches.value.indexOf(match) ?? -1;
-    editedItem.value = Object.assign({}, match);
-    showDialog.value = true;
-    }
+const editMatch = (match: MatchResponse) => {
+  if (matches.value != undefined) {
+  editIndex.value = matches.value.indexOf(match) ?? -1;
+  editedItem.value = Object.assign({}, match);
+  showDialog.value = true;
   }
+}
 
   const dateUtil = useDate() as DateFnsAdapter;
   const formatDate = (item: MatchResponse) => dateUtil.format(item.match.date, "fullDate");
 
-  const deleteMatch = (match: MatchResponse) => { }
+const deleteMatch = (match: MatchResponse) => { }
 
   const headers = ref([
     { key: "match.date", title: "Date", value: formatDate },
