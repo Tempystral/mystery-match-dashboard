@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import { api } from '@client/util/httpService.js';
-import { useQuery } from '@tanstack/vue-query';
-import { MatchResponse } from "@mmd/common"
 import UpcomingMatchCard from '../components/cards/UpcomingMatchCard.vue';
+import { useMatchQuery } from '@client/composables/queries';
 
-const { isPending, isRefetching, data: matches, } = useQuery({
-  queryKey: ["matches"],
-  queryFn: () => api.get<MatchResponse[]>("/matches", {})
-});
+const { isLoading: matchesLoading, data: matches, } = useMatchQuery({ limit: 4 });
 </script>
 <template>
   <v-container fluid class="bg-surface-accent fill-height align-start">
@@ -21,10 +17,10 @@ const { isPending, isRefetching, data: matches, } = useQuery({
       </v-col>
       <v-col cols="4"> </v-col>
       <v-col cols="4">
-        <v-card v-if="isPending || isRefetching" title="Next Match" subtitle="Loading...">
+        <v-card v-if="matchesLoading" title="Next Match" subtitle="Loading...">
           <v-skeleton-loader type="card"></v-skeleton-loader>
         </v-card>
-        <UpcomingMatchCard v-else-if="matches" :match="matches[0]" />
+        <UpcomingMatchCard v-else-if="matches" :match="matches[0].match" />
       </v-col>
     </v-row>
   </v-container>

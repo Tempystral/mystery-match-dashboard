@@ -1,28 +1,37 @@
-import { Outcome } from "./types.js";
-import { PlayerStatus, Round } from "./types.js";
+import { Outcome } from "./enums.js";
+import { PlayerStatus, Round } from "./enums.js";
+import { MatchId, PlayerId, ScoreId } from "./types.js";
 
-type PlayerResponse = {
-  player_id: string;
+interface PlayerDetails {
+  player_id: PlayerId;
   twitch_name: string;
-  twitch_alt?: string;
   discord_name: string;
-  twitter_name?: string;
+  // Discord ID?
   in_brackets: boolean;
   status: PlayerStatus;
-  pronunciation_notes: string;
-  pronouns: string;
-  accessibility: string;
-  timezone: string;
-  availability: string;
-  notes: string;
-  matches: Partial<MatchResponse>[];
-  Match?: Partial<MatchResponse>;
-  Score?: ScoreResponse;
+  pronouns: string | null;
+}
+
+interface PlayerPersonalDetails {
+  twitch_alt: string | null;
+  twitter_name: string | null;
+  pronunciation_notes: string | null;
+  accessibility: string | null;
+  timezone: string | null;
+  availability: string | null;
+  notes: string | null;
+}
+
+interface PlayerExtras {
   total_score: number;
-};
+  matches_played: number;
+}
+
+type PlayerResponse = PlayerDetails & PlayerPersonalDetails & Partial<PlayerExtras>;
+type MinimalPlayerResponse = PlayerDetails & Partial<PlayerExtras>;
 
 const defaultPlayer: PlayerResponse = {
-  player_id: "",
+  player_id: "" as PlayerId,
   twitch_name: "",
   twitch_alt: "",
   discord_name: "",
@@ -35,56 +44,71 @@ const defaultPlayer: PlayerResponse = {
   timezone: "",
   availability: "",
   notes: "",
-  matches: [],
-  total_score: 0,
+};
+
+type MatchData = {
+  match_id: MatchId;
+  tournament: string;
+  date: Date;
+  game: string | null;
+  platform: string | null;
+  gamemaster: string | null;
+  round: Round;
+  length: number;
+  vod: string | null;
 };
 
 type MatchResponse = {
-  match_id: string;
-  tournament: string;
-  date: Date;
-  game: string;
-  platform: string;
-  gamemaster: string;
-  round: Round;
-  length: number;
-  vod: string;
-  players: PlayerResponse[]; // This field is marked as optional in models.ts but an empty list does actually get created when there's no data
-  scores?: ScoreResponse[];
-  Score?: ScoreResponse;
+  match: MatchData;
+  scores: ScoreResponse[];
 };
 
-type MatchResponseGroup = Record<string, MatchResponse>;
-type PlayerResponseGroup = Record<string, PlayerResponse>;
-
 const defaultMatchResponse: MatchResponse = {
-  match_id: "",
-  tournament: "",
-  date: new Date(0),
-  game: undefined,
-  platform: "",
-  gamemaster: "",
-  round: Round.UNKNOWN,
-  length: 1,
-  vod: "",
-  players: [],
+  match: {
+    match_id: "" as MatchId,
+    tournament: "",
+    date: new Date(0),
+    game: undefined,
+    platform: "",
+    gamemaster: "",
+    round: Round.UNKNOWN,
+    length: 1,
+    vod: "",
+  },
   scores: [],
 };
 
-type ScoreResponse = {
-  score_id: string;
-  player_id: string;
+type ScoreMetadata = {
   points: number;
   outcome: Outcome;
 };
+type ScoreResponse = ScoreMetadata & {
+  score_id: ScoreId;
+  match_id: MatchId;
+  player_id: PlayerId;
+};
 
 const defaultScoreResponse: ScoreResponse = {
-  score_id: "",
-  player_id: "",
+  score_id: "" as ScoreId,
+  player_id: "" as PlayerId,
+  match_id: "" as MatchId,
   points: 0,
   outcome: Outcome.SCORE,
 };
 
-export { PlayerResponse, PlayerResponseGroup, defaultPlayer };
-export { MatchResponse, MatchResponseGroup, defaultMatchResponse };
-export { ScoreResponse, defaultScoreResponse };
+type PlayerInMatch = {
+  player: PlayerDetails;
+  score: ScoreMetadata | null;
+};
+
+export {
+  PlayerDetails,
+  PlayerPersonalDetails,
+  PlayerResponse,
+  PlayerExtras,
+  MinimalPlayerResponse,
+  PlayerInMatch,
+  defaultPlayer,
+};
+export { MatchResponse, MatchData, defaultMatchResponse };
+export { ScoreResponse, ScoreMetadata, defaultScoreResponse };

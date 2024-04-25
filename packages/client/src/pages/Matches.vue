@@ -1,24 +1,18 @@
 <script setup lang="ts">
-import { useQuery } from '@tanstack/vue-query';
-import { MatchResponse, PlayerResponse, RoundLabel, defaultMatchResponse, Round } from "@mmd/common"
-import DateFnsAdapter from "@date-io/date-fns";
-import { useDate } from 'vuetify';
-import { api } from '@client/util/httpService';
-import { ref } from 'vue';
-import { useMutateMatch } from '@client/composables/mutations';
-import MatchEditModal from '@client/components/MatchEditModal.vue';
+  import { useQuery } from '@tanstack/vue-query';
+  import { MatchResponse, PlayerResponse, RoundLabel, defaultMatchResponse, Round } from "@mmd/common"
+  import DateFnsAdapter from "@date-io/date-fns";
+  import { useDate } from 'vuetify';
+  import { api } from '@client/util/httpService';
+  import { ref } from 'vue';
+  import { useMutateMatch } from '@client/composables/mutations';
+  import MatchEditModal from '@client/components/MatchEditModal.vue';
+import { useMatchQuery, usePartialPlayers, usePlayerQuery } from '@client/composables/queries';
 
-const { isPending, data: matches, isRefetching } = useQuery({
-  queryKey: ["matches"],
-  queryFn: () => api.get<MatchResponse[]>("/matches", {})
-});
+  const { isPending, data: matches, isRefetching } = useMatchQuery();
+  const { error: mutError, mutate, reset } = useMutateMatch();
 
-const { error: mutError, mutate, reset } = useMutateMatch();
-
-const { data: playerData, error: playerError, isLoading: playerLoading } = useQuery({
-  queryKey: ["players", "partial"],
-  queryFn: () => api.get<PlayerResponse[]>("/players/partial", {})
-});
+  const { data: playerData, error: playerError, isLoading: playerLoading } = usePartialPlayers();
 
 const showDialog = ref(false);
 const editIndex = ref(-1);
@@ -32,20 +26,20 @@ const editMatch = (match: MatchResponse) => {
   }
 }
 
-const dateUtil = useDate() as DateFnsAdapter;
-const formatDate = (item: MatchResponse) => dateUtil.format(item.date, "fullDate");
+  const dateUtil = useDate() as DateFnsAdapter;
+  const formatDate = (item: MatchResponse) => dateUtil.format(item.match.date, "fullDate");
 
 const deleteMatch = (match: MatchResponse) => { }
 
-const headers = ref([
-  { key: "date", title: "Date", value: formatDate },
-  { key: "game", title: "Game Name" },
-  { key: "platform", title: "Platform" },
-  { key: "gamemaster", title: "Gamemaster" },
-  { key: "round", title: "Round", value: (item: MatchResponse) => RoundLabel[item.round ?? Round.UNKNOWN]},
-  { key: "vod", title: "VOD Link" },
-  { key: "actions", title: "Actions", sortable: false },
-]);
+  const headers = ref([
+    { key: "match.date", title: "Date", value: formatDate },
+    { key: "match.game", title: "Game Name" },
+    { key: "match.platform", title: "Platform" },
+    { key: "match.gamemaster", title: "Gamemaster" },
+    { key: "match.round", title: "Round", value: (item: MatchResponse) => RoundLabel[item.match.round ?? Round.UNKNOWN]},
+    { key: "match.vod", title: "VOD Link" },
+    { key: "actions", title: "Actions", sortable: false },
+  ]);
 </script>
 <template>
   <v-container class="bg-surface-accent">
@@ -63,8 +57,8 @@ const headers = ref([
           <v-toolbar color="indigo" title="Matches"></v-toolbar>
         </template>
 
-        <template #item.vod="{ item }">
-          <a :href="item.vod" class="text-decoration-none">
+        <template #item.match.vod="{ item }">
+          <a :href="item.match.vod || ''" class="text-decoration-none">
             Link&nbsp;
             <v-icon icon="fa fa-link" size="tiny" />
           </a>
@@ -78,7 +72,7 @@ const headers = ref([
     </v-card>
 
     <match-edit-modal
-      :match="editedItem"
+      :currentMatch="editedItem"
       :playerData="playerData"
       :player-error="playerError"
       :is-loading="playerLoading"

@@ -5,11 +5,9 @@
   import { PlayerStatus, PlayerStatusLabel, PlayerResponse, defaultPlayer } from "@mmd/common"
   import PlayerEditModal from "../components/PlayerEditModal.vue";
   import { useMutatePlayer } from "../composables/mutations"
+import { usePlayerQuery } from '@client/composables/queries';
 
-  const { isPending, data: players, isRefetching } = useQuery({
-    queryKey: ["players"],
-    queryFn: () => api.get<PlayerResponse[]>("/players", {})
-  });
+  const { isPending, data: players, isRefetching } = usePlayerQuery({enabled: true});
 
   const { error: mutError, mutate, reset } = useMutatePlayer();
 
@@ -32,7 +30,7 @@
     { key: "discord_name", title: "Discord" },
     { key: "status", title: "Status", value: (item: PlayerResponse) => PlayerStatusLabel[item.status as PlayerStatus] },
     { key: "in_brackets", title: "In Brackets?" },
-    { key: "matches", title: "Matches Played", value: (item: PlayerResponse) => item.matches?.length },
+    { key: "matches_played", title: "Matches Played" },
     { key: "total_score", title: "Total Points" },
     { key: "actions", title: "Actions", sortable: false },
   ]);

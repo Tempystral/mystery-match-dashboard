@@ -14,6 +14,7 @@
     "server": "pnpm --filter=@mmd/server run",
     "common": "pnpm --filter=@mmd/common run",
     "clean-all": "pnpm run -r clean",
-    "build-all": "pnpm run common build; pnpm --filter=@mmd/server --filter=@mmd/client run build"
+    "build-all": "pnpm run common build; pnpm --filter=@mmd/server --filter=@mmd/client run build",
+    "database": "pnpm --filter server database"
   }
 }

@@ -1,8 +1,6 @@
-import { UpdateValues, ValidationError } from "@sequelize/core";
-import express from "express";
-import { body } from "express-validator";
-import { Player } from "../../data/models.js";
-import * as database from "../services/dbService.js";
+import { MatchId, PlayerSearchParams, QueryParamError } from "@mmd/common";
+import express, { Request } from "express";
+import database from "../services/database.js";
 import sheets from "../services/sheetsService.js";
 
 const router = express.Router();
@@ -19,21 +17,38 @@ and that means looking up the player by ID. I don't want to search by property, 
 By returning an object with player ID keys corresponding to player values, I spend O(n) populating the object during the fetch,
 then O(1) x4 looking up four players by ID in the client. It also makes my data easier to search in general. */
 
+// Request types: Request params (?), Response body, request body, request query
+type PlayerGetRequest = Request<{}, unknown, never, PlayerSearchParams>;
+
 /**
  * Retrieves a list of players.
  * Returns type PlayerResponseGroup
  */
-router.get("/", async (req, res, next) => {
-  const players = await database.getPlayers({ extras: true });
+router.get("/", async (req: PlayerGetRequest, res, next) => {
+  console.log(req.query); // At some point I should sanitize these
+  const { match_id, ...params } = req.query;
+  let players;
+  try {
+    if (match_id) {
+      players = await database.getMatchPlayers(match_id as MatchId);
+    } else {
+      players = await database.getPlayers(params);
+    }
+  } catch (e) {
+    if (e instanceof QueryParamError) {
+      res.status(500).send(e.message);
+    }
+  }
+
   res.send(players);
 });
 
-// This is only for now - this should be replaced by an API that can accept arbitrary values via URL parameters
 router.get("/partial", async (req, res, next) => {
-  const players = await database.getPartialPlayers({ extras: true });
+  const players = await database.getMinimalPlayers();
   res.send(players);
 });
 
+/*
 // Search players
 router.post("/", async (req, res, next) => {
   res.send(req.body);
@@ -60,7 +75,7 @@ router.patch("/", body("value.player_id").exists({ values: "falsy" }).isUUID(), 
   }
   return res.status(200).send(result);
 });
-
+*/
 // Import
 router.get("/import", async (req, res, next) => {
   const doc = await sheets.loadDocument(process.env.MATCHES_SPREADSHEET!);

@@ -1,12 +1,13 @@
 import { Events, IntentsBitField } from "discord.js";
 import { Client } from "discordx";
-import { Match, Score, Player } from "./data/models.js";
-import { Sequelize } from "@sequelize/core";
 
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import router from "./api/router.js";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pg from "pg";
+import * as schema from "./data/schema.js";
 
 function setup_web() {
   const app = express();
@@ -25,20 +26,17 @@ function setup_web() {
 }
 
 async function setup_database() {
-  const sq = new Sequelize({
-    database: "database",
-    username: "user",
-    password: "password",
-    dialect: "sqlite",
-    logging: false,
-    storage: "database.sqlite",
-    models: [Player, Match, Score],
+  const client = new pg.Client({
+    host: "localhost",
+    port: Number(process.env.PGPORT) ?? 5432,
+    database: process.env.PGDB,
+    user: process.env.PGUSER,
+    password: process.env.PGPASSWORD,
   });
-
-  await Match.sync();
-  await Player.sync();
-  await Score.sync();
-  return sq;
+  await client.connect();
+  const s = { ...schema };
+  const db = drizzle(client, { schema: s });
+  return db;
 }
 
 async function setup_bot() {
