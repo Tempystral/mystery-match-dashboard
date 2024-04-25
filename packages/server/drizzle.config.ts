@@ -1,4 +1,5 @@
 import { defineConfig } from "drizzle-kit";
+import "dotenv/config";
 
 export default defineConfig({
   schema: "./src/data/schema.ts",
@@ -7,9 +8,9 @@ export default defineConfig({
   dbCredentials: {
     host: "localhost",
     port: 5432,
-    database: "mmd",
-    user: "azurite",
-    password: "azurite",
+    database: process.env.PGDB ?? "",
+    user: process.env.PGUSER,
+    password: process.env.PGPASSWORD,
   },
 });
 
