@@ -19,7 +19,7 @@ export function usePlayerQuery<T = PlayerResponse[]>(options?: {
   const query = keys.length && params ? "?" + keys.map((k) => `${k}=${params[k]}`).join("&") : "";
   return useQuery({
     queryFn: enabled ? () => api.get<T>(`/players${query}`, {}) : skipToken,
-    queryKey: ["players", ...keys],
+    queryKey: ["players", params],
   });
 }
 
@@ -37,7 +37,7 @@ export function useMatchQuery(options?: { limit: number }) {
       ? "?" + keys.map((k) => `${k}=${options[k as keyof typeof options]}`).join("&")
       : "";
   return useQuery({
-    queryKey: ["matches"],
+    queryKey: ["matches", options],
     queryFn: () => api.get<MatchResponse[]>(`/matches${query}`, {}),
   });
 }
